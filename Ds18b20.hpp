@@ -17,6 +17,9 @@ public:
 	bool isConversionDone(void);
 
 	float getTemp(void);
+	Dongle::Addr getAddr(void) {
+		return addr;
+	}
 };
 
 #endif /* __DS18B20_HPP__ */
