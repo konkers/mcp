@@ -14,7 +14,7 @@ LDXXFLAGS = $(LDFLAGS)
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o Dongle.o
+OBJS = main.o Dongle.o Ds18b20.o
 
 mcp: $(OBJS)
 	$(CXX) $(LDXXFLAGS) -o $@ $^ $(LDLIBS)
