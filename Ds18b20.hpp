@@ -7,8 +7,10 @@ class Ds18b20 {
 private:
 	Dongle *dongle;
 	Dongle::Addr addr;
-
+	float offset;
+	float scale;
 public:
+	Ds18b20(Dongle *dongle, Dongle::Addr addr, float cal0, float cal100);
 	Ds18b20(Dongle *dongle, Dongle::Addr addr);
 
 	void startConversion(void);
