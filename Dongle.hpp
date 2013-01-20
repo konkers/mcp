@@ -1,6 +1,8 @@
 #ifndef __DONGLE_HPP__
 #define __DONGLE_HPP__
 
+#include <string.h>
+
 #include <vector>
 
 #include <libusb-1.0/libusb.h>
@@ -52,10 +54,12 @@ public:
 			memcpy(addr, a.addr, sizeof(addr));
 		}
 
-		friend int operator==(const Addr &a, const Addr &b) {
+		friend bool operator==(const Addr &a, const Addr &b) {
 			return !memcmp(a.addr, b.addr, 8);
 		}
-
+		friend bool operator<(const Addr &a, const Addr &b) {
+			return memcmp(a.addr, b.addr, 8) < 0;
+		}
 	};
 
 private:
