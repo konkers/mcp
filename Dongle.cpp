@@ -261,6 +261,17 @@ int Dongle::writeByte(uint8_t data)
 	return doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
+/* HACK until OW pwm device is made */
+int Dongle::setPower(uint8_t power)
+{
+	uint8_t cmd[2];
+
+	cmd[0] = SET_POWER;
+	cmd[1] = power;
+
+	return doCommand(cmd, sizeof(cmd), NULL, 0);
+}
+
 bool Dongle::connect(void)
 {
 	int err;

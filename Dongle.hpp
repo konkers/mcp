@@ -23,6 +23,9 @@ private:
 		OW_READ		= 0x4,
 		OW_READ_BYTE	= 0x5,
 		OW_WRITE_BYTE	= 0x6,
+
+		/* HACK until OW pwm device is made */
+		SET_POWER	= 0x80,
 	};
 
 public:
@@ -84,6 +87,9 @@ public:
 	int read(void);
 	int readByte(void);
 	int writeByte(uint8_t data);
+
+	/* HACK until OW pwm device is made */
+	int setPower(uint8_t power);
 
 	Addr getAddr(unsigned n);
 };
