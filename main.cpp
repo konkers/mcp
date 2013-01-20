@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <vector>
+#include <map>
 using namespace std;
 
 #include "Dongle.hpp"
@@ -47,14 +48,24 @@ int main(int argc, char *argv[])
 		return 1;
 
 	vector<Ds18b20 *> sensors;
-
+	map<Dongle::Addr, Ds18b20 *> sensorMap;
 
 	for (i = 0; i < ret; i++) {
 		Dongle::Addr a = d.getAddr(i);
 		Ds18b20 *ds = newSensor(&d, a);
-		if (ds)
+		if (ds) {
 			sensors.push_back(ds);
+			sensorMap[a] = ds;
+		}
 	}
+
+	Ds18b20 *heaterTemp = NULL;
+	map<Dongle::Addr, Ds18b20 *>::const_iterator si =
+		sensorMap.find(Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
+	if (si != sensorMap.end())
+		heaterTemp = si->second;
+	else
+		printf("Could not find heater temp probe\n");
 
 	while(1) {
 		sensors[0]->startAllConversion();
