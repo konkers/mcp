@@ -9,12 +9,12 @@ ifeq ($(UNAME),Linux)
 CFLAGS +=
 LDFLAGS += 
 endif
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(CFLAGS) #-std=c++11
 LDXXFLAGS = $(LDFLAGS)
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o Dongle.o Ds18b20.o
+OBJS = main.o Dongle.o Ds18b20.o Pid.o
 
 mcp: $(OBJS)
 	$(CXX) $(LDXXFLAGS) -o $@ $^ $(LDLIBS)

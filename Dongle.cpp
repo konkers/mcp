@@ -27,6 +27,7 @@
 // SUCH DAMAGE.
 //
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "Dongle.hpp"
 

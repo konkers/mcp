@@ -1,4 +1,6 @@
+#include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <vector>
 #include <map>
@@ -6,6 +8,7 @@ using namespace std;
 
 #include "Dongle.hpp"
 #include "Ds18b20.hpp"
+#include "Pid.hpp"
 
 // 28 c5 c5 f4 03 00 00 01
 //  0.0 = 0.250000
@@ -33,12 +36,23 @@ Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr)
 		return NULL;
 }
 
+bool running = true;
+
+void signal_handler(int signum)
+{
+	running = false;
+	signal(signum, SIG_DFL);
+}
 
 int main(int argc, char *argv[])
 {
 	Dongle d;
 	int ret;
 	int i;
+	Pid pid(79.5, 50.0, 0, 0);
+
+	signal(SIGINT, signal_handler);
+	signal(SIGTERM, signal_handler);
 
 	if (!d.connect())
 		return 1;
@@ -67,10 +81,11 @@ int main(int argc, char *argv[])
 	else
 		printf("Could not find heater temp probe\n");
 
-	while(1) {
+	while(running) {
 		sensors[0]->startAllConversion();
 		while (!sensors[0]->isConversionDone()) { }
 
+#if 1
 		for (vector<Ds18b20 *>::iterator ds = sensors.begin();
 		     ds != sensors.end();
 		     ds++) {
@@ -81,7 +96,19 @@ int main(int argc, char *argv[])
 			       a.addr[4], a.addr[5], a.addr[6], a.addr[7],
 			       temp);
 		}
+#endif
+		if (heaterTemp) {
+			float temp = heaterTemp->getTemp();
+			float power = pid.update(temp);
+			uint8_t power_1 = power * 255;
+			d.setPower(power_1);
+			printf("[%.2f] %.2f,%02x  %.2f,%.2f\n",
+			       temp, power, power_1,  pid.getPkt_1(), pid.getEkt_1());
+		}
+		sleep(10);
 	}
+
+	printf("exiting\n");
 
 	return 0;
 }
