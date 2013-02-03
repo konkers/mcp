@@ -6,15 +6,10 @@
 #include <map>
 using namespace std;
 
-extern "C" {
-#include <lua.h>
-}
-
 #include "Dongle.hpp"
 #include "Ds18b20.hpp"
 #include "Pid.hpp"
-
-#include "mongoose.h"
+#include "WebServer.hpp"
 
 vector<Ds18b20 *> sensors;
 map<Dongle::Addr, Ds18b20 *> sensorMap;
@@ -56,97 +51,6 @@ void signal_handler(int signum)
 	signal(signum, SIG_DFL);
 }
 
-struct mg_context *ctx;
-const char *mg_options[] = {
-	"listening_ports", "8080",
-	"document_root", "html",
-	"error_log_file", "www_err.log",
-	NULL};
-
-static void *mg_callback(enum mg_event event,
-                      struct mg_connection *conn)
-{
-	const struct mg_request_info *ri = mg_get_request_info(conn);
-	char post_data[1024], val[sizeof(post_data)];
-//	float p, i, d;
-	int post_data_len;
-
-	if (event == MG_INIT_LUA) {
-		lua_State *L = (lua_State *) ri->ev_data;
-
-		lua_pushnumber(L, pid.getCurTemp());
-		lua_setglobal(L, "cur_temp");
-
-		lua_pushnumber(L, pid.getSetPoint());
-		lua_setglobal(L, "set_point");
-
-		lua_pushnumber(L, pid.getP());
-		lua_setglobal(L, "pid_p");
-
-		lua_pushnumber(L, pid.getI());
-		lua_setglobal(L, "pid_i");
-
-		lua_pushnumber(L, pid.getD());
-		lua_setglobal(L, "pid_d");
-
-		lua_pushnumber(L, pid.getPkt_1());
-		lua_setglobal(L, "pid_pkt_1");
-
-		lua_pushnumber(L, pid.getEkt_1());
-		lua_setglobal(L, "pid_ekt_1");
-
-
-
-		printf("lua\n");
-	}
-
-	if (event != MG_NEW_REQUEST)
-		return NULL;
-
-	if (!strcmp(ri->uri, "/pid_update")) {
-		// User has submitted a form, show submitted data and a variable value
-		post_data_len = mg_read(conn, post_data, sizeof(post_data));
-
-		// Parse form data. input1 and input2 are guaranteed to be NUL-terminated
-		mg_get_var(post_data, post_data_len, "p_term", val, sizeof(val));
-		printf("p_term = %s\n", val);
-
-		mg_get_var(post_data, post_data_len, "i_term", val, sizeof(val));
-		printf("i_term = %s\n", val);
-
-		mg_get_var(post_data, post_data_len, "d_term", val, sizeof(val));
-		printf("d_term = %s\n", val);
-
-		const char *host = mg_get_header(conn, "Host");
-		mg_printf(conn, "HTTP/1.1 302 Found\r\n"
-			  "Location: http://%s/test.lp\r\n\r\n",
-			  host);
-	} else if (0) {
-		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
-//			  "Content-Length: %d\r\n"
-			  "Content-Type: text/html\r\n\r\n");
-		mg_printf(conn, "<html><body><table>\n");
-		for (const auto& ds : sensors) {
-			float temp = ds->getTemp();
-			Dongle::Addr a = ds->getAddr();
-			mg_printf(conn, "<tr>");
-			mg_printf(conn, "<td>%02x %02x %02x %02x %02x %02x %02x %02x</td>",
-				  a.addr[0], a.addr[1], a.addr[2], a.addr[3],
-				  a.addr[4], a.addr[5], a.addr[6], a.addr[7]);
-			mg_printf(conn, "<td>%f</td>", temp);
-			mg_printf(conn, "</tr>");
-		}
-		mg_printf(conn, "</table></body></html>");
-	}
-	return NULL;
-//	return (void *)"";  // Mark request as processed
-}
-
-void startWebServer(void)
-{
-	ctx = mg_start(&mg_callback, NULL, mg_options);
-}
-
 int main(int argc, char *argv[])
 {
 	Dongle d;
@@ -179,7 +83,7 @@ int main(int argc, char *argv[])
 	}
 	printf("4\n");
 
-	startWebServer();
+	WebServer server(8080, &pid);
 
 	map<Dongle::Addr, Ds18b20 *>::const_iterator si =
 		sensorMap.find(Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
@@ -214,7 +118,6 @@ int main(int argc, char *argv[])
 	}
 
 	printf("exiting\n");
-	mg_stop(ctx);
 
 	return 0;
 }

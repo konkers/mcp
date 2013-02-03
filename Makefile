@@ -16,11 +16,11 @@ LDFLAGS +=
 endif
 CFLAGS += -DUSE_LUA
 CXXFLAGS = $(CFLAGS) -std=c++11
-LDXXFLAGS = $(LDFLAGS) 
+LDXXFLAGS = $(LDFLAGS)
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o Dongle.o Ds18b20.o Pid.o mongoose.o
+OBJS = main.o Dongle.o Ds18b20.o Pid.o Thread.o WebServer.o mongoose.o
 
 TARGETS=mcp
 
