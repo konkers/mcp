@@ -12,8 +12,8 @@ void *mg_callback(enum mg_event event, struct mg_connection *conn)
 	return server->callback(event, conn);
 }
 
-WebServer::WebServer(int port, Pid *pid) :
-	port(port), pid(pid)
+WebServer::WebServer(int port, Pid *pid, EventQueue *queue) :
+	port(port), pid(pid), eventQueue(queue)
 {
 	char port_str[16];
 
@@ -76,6 +76,9 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 	lua_pushnumber(L, pid->getEkt_1());
 	lua_setglobal(L, "pid_ekt_1");
 
+	lua_pushstring(L, errString.c_str());
+	lua_setglobal(L, "err_string");
+
 	return true;
 }
 
@@ -83,7 +86,7 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 {
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 	char post_data[1024], val[sizeof(post_data)];
-	float p, i, d;
+	float set_point, p, i, d;
 	int post_data_len;
 
 	if (!strcmp(ri->uri, "/pid_update")) {
@@ -96,6 +99,13 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 		errString.erase();
 
 		// Parse form data. input1 and input2 are guaranteed to be NUL-terminated
+		mg_get_var(post_data, post_data_len, "set_point", val, sizeof(val));
+		set_point = strtof(val, &endp);
+		if (endp == val) {
+			errString += "can't convert set_point to float\n";
+			dataValid = false;
+		}
+
 		mg_get_var(post_data, post_data_len, "p_term", val, sizeof(val));
 		p = strtof(val, &endp);
 		if (endp == val) {
@@ -117,7 +127,9 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 			dataValid = false;
 		}
 
-		printf("p=%f, i=%f, d=%f\n", p, i, d);
+		EventQueue::PidUpdateEvent *event =
+			new EventQueue::PidUpdateEvent(set_point, p, i, d);
+		eventQueue->postEvent(event);
 
 		const char *host = mg_get_header(conn, "Host");
 		mg_printf(conn, "HTTP/1.1 302 Found\r\n"

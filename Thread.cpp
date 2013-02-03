@@ -61,11 +61,12 @@ int Thread::stop(void)
 	int ret;
 
 	if (running) {
+		running = false;
+		signalStop();
 		ret = pthread_join(pthread, &val);
 		if (ret < 0)
 			fprintf(stderr, "pthread_join failed: %s\n",
 				strerror(errno));
-		running = false;
 	}
 	return rc;
 }

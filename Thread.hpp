@@ -88,14 +88,16 @@ public:
 	};
 
 private:
-	bool running;
 	pthread_t pthread;
 	int rc;
 
 	friend void *ThreadStart(void * data);
 
 protected:
+	bool running;
 	virtual int run(void) = 0;
+	virtual void signalStop(void) {
+	}
 
 public:
 	Thread();

@@ -20,7 +20,16 @@ LDXXFLAGS = $(LDFLAGS)
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o Dongle.o Ds18b20.o Pid.o Thread.o WebServer.o mongoose.o
+OBJS = main.o \
+	mongoose.o \
+	Dongle.o \
+	DongleThread.o \
+	Ds18b20.o \
+	EventQueue.o \
+	Pid.o \
+	Thread.o \
+	TimerThread.o \
+	WebServer.o
 
 TARGETS=mcp
 

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "EventQueue.hpp"
 #include "Pid.hpp"
 
 #include "mongoose.h"
@@ -15,6 +16,8 @@ private:
 
 	std::string errString;
 
+	EventQueue *eventQueue;
+
 	friend void *mg_callback(enum mg_event event, struct mg_connection *conn);
 	void *callback(enum mg_event event, struct mg_connection *conn);
 
@@ -22,7 +25,7 @@ private:
 	bool handleNewRequest(struct mg_connection *conn);
 
 public:
-	WebServer(int port, Pid *pid);
+	WebServer(int port, Pid *pid, EventQueue *queue);
 	~WebServer();
 
 };
