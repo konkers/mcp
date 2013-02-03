@@ -1,4 +1,9 @@
-UNAME := $(shell uname -s)
+DIRS = lua
+
+all: dirs mcp
+
+
+DUNAME := $(shell uname -s)
 ARCH := $(shell uname -m)
 
 ifeq ($(UNAME),Darwin)
@@ -9,12 +14,17 @@ ifeq ($(UNAME),Linux)
 CFLAGS +=
 LDFLAGS += 
 endif
-CXXFLAGS = $(CFLAGS) #-std=c++11
-LDXXFLAGS = $(LDFLAGS)
+CFLAGS += -DUSE_LUA
+CXXFLAGS = $(CFLAGS) -std=c++11
+LDXXFLAGS = $(LDFLAGS) 
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o Dongle.o Ds18b20.o Pid.o
+OBJS = main.o Dongle.o Ds18b20.o Pid.o mongoose.o
+
+TARGETS=mcp
 
 mcp: $(OBJS)
-	$(CXX) $(LDXXFLAGS) -o $@ $^ $(LDLIBS)
+	$(LINKXX) #$(LDXXFLAGS) -o $@ $^ $(LDLIBS)
+
+include rules.mk
