@@ -23,6 +23,7 @@ WebServer::WebServer(int port, Pid *pid, EventQueue *queue) :
 		"listening_ports", port_str,
 		"document_root", "html",
 		"error_log_file", "www_err.log",
+		"index_files", "index.html,index.lp",
 		NULL};
 
 	ctx = mg_start(&mg_callback, this, mg_options);
@@ -133,7 +134,7 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 
 		const char *host = mg_get_header(conn, "Host");
 		mg_printf(conn, "HTTP/1.1 302 Found\r\n"
-			  "Location: http://%s/test.lp\r\n\r\n",
+			  "Location: http://%s/index.lp\r\n\r\n",
 			  host);
 		return true;
 	}
