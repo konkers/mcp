@@ -39,6 +39,10 @@ dirname:
 	@echo "  CC     " `basename $<`
 	${CC} -c ${CFLAGS} -o $@ $<
 
+%.s: %.c
+	@echo "  CC -S  " `basename $<`
+	${CC} -c ${CFLAGS} -S -o $@ $<
+
 %.o: %.cpp
 	@echo "  C++    " `basename $<`
 	${CXX} -c ${CXXFLAGS} -o $@ $<
