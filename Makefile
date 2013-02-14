@@ -1,6 +1,6 @@
-DIRS = lua
+DIRS = lua avr
 
-all: dirs mcp
+all: dirs mcp test
 
 
 DUNAME := $(shell uname -s)
@@ -20,7 +20,7 @@ LDXXFLAGS = $(LDFLAGS)
 
 LDLIBS := -lusb-1.0
 
-OBJS = main.o \
+MCP_OBJS = main.o \
 	mongoose.o \
 	Dongle.o \
 	DongleThread.o \
@@ -31,9 +31,17 @@ OBJS = main.o \
 	TimerThread.o \
 	WebServer.o
 
-TARGETS=mcp
+TEST_OBJS = test.o \
+	Dongle.o
 
-mcp: $(OBJS)
+OBJS=${MCP_OBJS} ${TEST_OBJS}
+
+TARGETS=mcp test
+
+mcp: $(MCP_OBJS)
+	$(LINKXX) #$(LDXXFLAGS) -o $@ $^ $(LDLIBS)
+
+test: $(TEST_OBJS)
 	$(LINKXX) #$(LDXXFLAGS) -o $@ $^ $(LDLIBS)
 
 include rules.mk
