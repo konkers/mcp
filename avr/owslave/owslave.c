@@ -47,6 +47,10 @@
 
 static uint8_t ows_dev_handle_byte(uint8_t byte)
 {
+	uart_puts_P(PSTR("dev byte "));
+	uart_printhex(byte);
+	uart_puts_P(PSTR("\n"));
+
 	return 0;
 }
 
@@ -123,7 +127,7 @@ static void ows_net_handle_search_rom_data(void)
 static uint8_t ows_net_handle_data_bit(uint8_t bit)
 {
 	ows_net_byte >>= 1;
-	ows_net_byte |= bit << 7;
+	ows_net_byte |= bit ? 0x80 : 0x0l;
 	ows_net_bit++;
 
 	if (ows_net_bit == 8) {
@@ -173,6 +177,7 @@ static uint8_t ows_net_handle_command(int bit)
 
 static uint8_t ows_net_handle_addressed(int bit)
 {
+
 	if (ows_net_handle_data_bit(bit))
 		return ows_dev_handle_byte(ows_net_byte);
 
@@ -186,8 +191,10 @@ static uint8_t ows_net_handle_match_rom(uint8_t bit)
 	else
 		ows_net_addressed = 0;
 
-	if (++ows_net_bit == 64)
+	if (++ows_net_bit == 64) {
+		ows_net_bit = 0;
 		ows_net_state = ows_net_addressed ? OWS_NET_ADDRESSED : OWS_NET_COMMAND;
+	}
 
 	return 0;
 }
@@ -200,6 +207,7 @@ static uint8_t ows_net_handle_search_rom(uint8_t bit)
 		ows_net_addressed = 0;
 
 	if (++ows_net_bit == 64) {
+		ows_net_bit = 0;
 		ows_net_state = ows_net_addressed ? OWS_NET_ADDRESSED : OWS_NET_COMMAND;
 		return 0;
 	} else {
