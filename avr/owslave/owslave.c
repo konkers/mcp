@@ -379,7 +379,16 @@ static enum ows_phy_state ows_phy_state;
 static uint16_t ows_phy_cycle_start;
 static uint8_t ows_phy_write_bytes;
 
-static void ows_phy_trigger_edge(uint8_t edge)
+typedef void (*ows_phy_irq_handler)(void);
+
+static ows_phy_irq_handler ows_phy_capture_handler;
+static ows_phy_irq_handler ows_phy_compare_handler;
+
+static void ows_phy_null_handler(void)
+{
+}
+
+static void ows_phy_trigger_edge(uint8_t edge, ows_phy_irq_handler handler)
 {
 	uint8_t timsk;
 
@@ -398,9 +407,12 @@ static void ows_phy_trigger_edge(uint8_t edge)
 	timsk |= _BV(ICIE1);
 	timsk &= ~_BV(OCIE1A);
 	TIMSK = timsk;
+
+	ows_phy_capture_handler = handler;
+	ows_phy_compare_handler = ows_phy_null_handler;
 }
 
-static void ows_phy_trigger_counter(uint16_t counter)
+static void ows_phy_trigger_counter(uint16_t counter, ows_phy_irq_handler handler)
 {
 	uint8_t timsk;
 
@@ -410,9 +422,12 @@ static void ows_phy_trigger_counter(uint16_t counter)
 	timsk &= ~_BV(ICIE1);
 	timsk |= _BV(OCIE1A);
 	TIMSK = timsk;
+
+	ows_phy_capture_handler = ows_phy_null_handler;
+	ows_phy_compare_handler = handler;
 }
 
-static void ows_phy_trigger_time(uint16_t when)
+static void ows_phy_trigger_time(uint16_t when, ows_phy_irq_handler handler)
 {
 #ifdef OWS_PHY_DEBUG
 	uart_puts_P(PSTR("t "));
@@ -421,10 +436,10 @@ static void ows_phy_trigger_time(uint16_t when)
 	uart_puts_P(PSTR("\n"));
 #endif
 
-	ows_phy_trigger_counter(ows_phy_cycle_start + when);
+	ows_phy_trigger_counter(ows_phy_cycle_start + when, handler);
 }
 
-static void ows_phy_trigger_delay(uint16_t delay)
+static void ows_phy_trigger_delay(uint16_t delay, ows_phy_irq_handler handler)
 {
 #ifdef OWS_PHY_DEBUG
 	uart_puts_P(PSTR("d "));
@@ -433,10 +448,12 @@ static void ows_phy_trigger_delay(uint16_t delay)
 	uart_puts_P(PSTR("\n"));
 #endif
 
-	ows_phy_trigger_counter(TCNT + delay);
+	ows_phy_trigger_counter(TCNT + delay, handler);
 }
 
-static void ows_phy_trigger_both(uint8_t edge, uint16_t when)
+static void ows_phy_trigger_both(uint8_t edge, uint16_t when,
+				 ows_phy_irq_handler capture_handler,
+				 ows_phy_irq_handler compare_handler)
 {
 #ifdef OWS_PHY_DEBUG
 	uart_puts_P(PSTR("b "));
@@ -455,25 +472,37 @@ static void ows_phy_trigger_both(uint8_t edge, uint16_t when)
 	OCRA = ows_phy_cycle_start + when;
 
 	TIMSK |= _BV(ICIE1) | _BV(OCIE1A);
+
+	ows_phy_capture_handler = capture_handler;
+	ows_phy_compare_handler = compare_handler;
 }
 
 
-static void ows_phy_handle_reset0(uint8_t capture, uint8_t timeout);
+static void ows_phy_handle_idle(void);
+static void ows_phy_handle_reset0(void);
+static void ows_phy_handle_reset1(void);
+static void ows_phy_handle_reset2(void);
+static void ows_phy_handle_sample0(void);
+static void ows_phy_handle_sample1_capture(void);
+static void ows_phy_handle_sample1_compare(void);
+static void ows_phy_handle_write(void);
+
 static void ows_phy_reset(void)
 {
 	ows_net_reset();
 	ows_phy_write_bytes = 0;
 	ows_phy_state = OWS_PHY_RESET0;
-	ows_phy_trigger_edge(1);
+	ows_phy_trigger_edge(1, ows_phy_handle_reset0);
 	if (ows_phy_read())
-		ows_phy_handle_reset0(0, 0);
+		ows_phy_handle_reset0();
 }
 
-static void ows_phy_handle_idle(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_idle(void)
 {
 	ows_phy_cycle_start = ICR;
 
 	/* debounce */
+	/* XXX: this should not be needed */
 	if (ows_phy_read())
 		return;
 
@@ -481,127 +510,72 @@ static void ows_phy_handle_idle(uint8_t capture, uint8_t timeout)
 	if (ows_phy_write_bytes > 0) {
 		ows_phy_drive(ows_net_get_write_data());
 		PORTL |= _BV(0);
-		ows_phy_state = OWS_PHY_WRITE;
-		ows_phy_trigger_time(USEC(20));
+		ows_phy_trigger_time(USEC(20), ows_phy_handle_write);
 		ows_phy_write_bytes--;
 	} else {
-		ows_phy_state = OWS_PHY_SAMPLE0;
 		/* between 15 and 60 uS */
-		ows_phy_trigger_time(USEC(37));
+		ows_phy_trigger_time(USEC(37), ows_phy_handle_sample0);
 	}
 }
 
-static void ows_phy_handle_reset0(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_reset0(void)
 {
-	ows_phy_state = OWS_PHY_RESET1;
-	ows_phy_trigger_delay(USEC(37));
+	ows_phy_trigger_delay(USEC(37), ows_phy_handle_reset1);
 }
 
-static void ows_phy_handle_reset1(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_reset1(void)
 {
 	ows_phy_drive(0);
-	ows_phy_state = OWS_PHY_RESET2;
-	ows_phy_trigger_delay(USEC(150));
+	ows_phy_trigger_delay(USEC(150), ows_phy_handle_reset2);
 }
 
-static void ows_phy_handle_reset2(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_reset2(void)
 {
 	ows_phy_drive(1);
-	ows_phy_state = OWS_PHY_IDLE;
-	ows_phy_trigger_edge(0);
+	ows_phy_trigger_edge(0, ows_phy_handle_idle);
 }
 
-static void ows_phy_handle_sample0(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_sample0(void)
 {
 	if (ows_phy_read()) {
-		ows_phy_trigger_edge(0);
+		ows_phy_trigger_edge(0, ows_phy_handle_idle);
 		ows_phy_write_bytes = ows_net_handle_data(1);
-		ows_phy_state = OWS_PHY_IDLE;
 	} else {
 		ows_phy_state = OWS_PHY_SAMPLE1;
 		/* between 120 and 480 uS */
-		ows_phy_trigger_both(1, USEC(300));
+		ows_phy_trigger_both(1, USEC(300),
+				     ows_phy_handle_sample1_capture,
+				     ows_phy_handle_sample1_compare);
 	}
 }
 
-static void ows_phy_handle_sample1(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_sample1_capture(void)
 {
-	if (capture) {
-		ows_phy_trigger_edge(0);
-		ows_phy_write_bytes = ows_net_handle_data(0);
-		ows_phy_state = OWS_PHY_IDLE;
-	} else {
-		ows_phy_reset();
-	}
+	ows_phy_trigger_edge(0, ows_phy_handle_idle);
+	ows_phy_write_bytes = ows_net_handle_data(0);
+}
+static void ows_phy_handle_sample1_compare(void)
+{
+	ows_phy_reset();
 }
 
-static void ows_phy_handle_write(uint8_t capture, uint8_t timeout)
+static void ows_phy_handle_write(void)
 {
 	ows_phy_drive(1);
-	ows_phy_state = OWS_PHY_IDLE;
-	ows_phy_trigger_edge(0);
-}
-
-void ows_phy_handle_state(uint8_t capture, uint8_t timeout)
-{
-#ifdef OWS_PHY_DEBUG
-	uint8_t prev_state = ows_phy_state;
-#endif
-
-	switch (ows_phy_state) {
-	case OWS_PHY_IDLE:
-		ows_phy_handle_idle(capture, timeout);
-		break;
-
-	case OWS_PHY_RESET0:
-		ows_phy_handle_reset0(capture, timeout);
-		break;
-
-	case OWS_PHY_RESET1:
-		ows_phy_handle_reset1(capture, timeout);
-		break;
-
-	case OWS_PHY_RESET2:
-		ows_phy_handle_reset2(capture, timeout);
-		break;
-
-	case OWS_PHY_SAMPLE0:
-		ows_phy_handle_sample0(capture, timeout);
-		break;
-
-	case OWS_PHY_SAMPLE1:
-		ows_phy_handle_sample1(capture, timeout);
-		break;
-
-	case OWS_PHY_WRITE:
-		ows_phy_handle_write(capture, timeout);
-		break;
-
-	}
-	PORTL |= _BV(0);
-
-
-#ifdef OWS_PHY_DEBUG
-	uart_printhex((capture << 4) | timeout);
-	uart_puts_P(PSTR(":"));
-	uart_printhex(prev_state);
-	uart_puts_P(PSTR(">"));
-	uart_printhex(ows_phy_state);
-	uart_puts_P(PSTR("\n"));
-#endif
-
+	ows_phy_trigger_edge(0, ows_phy_handle_idle);
 }
 
 ISR(TIMER_CAPT_vect)
 {
-	PORTL &= ~_BV(0);
-	ows_phy_handle_state(1, 0);
+//	PORTL &= ~_BV(0);
+	ows_phy_capture_handler();
 }
 
 ISR(TIMER_COMPA_vect)
 {
 	PORTL &= ~_BV(0);
-	ows_phy_handle_state(0, 1);
+	ows_phy_compare_handler();
+//	ows_phy_handle_state(0, 1);
 }
 
 
