@@ -6,6 +6,8 @@
 
 #include <uart.h>
 
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
+
 #undef OWS_PHY_DEBUG
 #undef OWS_NET_DEBUG
 
@@ -45,11 +47,94 @@
 
 #define USEC(us)	((us) * 16)
 
+enum ows_dev_commands {
+	OWS_DEV_CMD_WRITE_SCRATCHPAD = 0x4e,
+};
+
+enum ows_dev_state {
+	OWS_DEV_CMD,
+	OWS_DEV_WRITE_SCRATCHPAD,
+};
+
+uint8_t ows_dev_scratchpad[1];
+uint8_t ows_dev_scratchpad_idx;
+enum ows_dev_state ows_dev_state;
+
+struct output_cfg {
+	volatile uint8_t *port;
+	uint8_t mask;
+} __attribute__((packed));
+
+
+struct output_cfg output[] = {
+	{&PORTH, _BV(4)},
+	{&PORTH, _BV(3)},
+	{&PORTE, _BV(3)},
+	{&PORTG, _BV(5)},
+	{&PORTB, _BV(6)},
+	{&PORTB, _BV(7)},
+};
+
+
+static void output_set(uint8_t data)
+{
+	uint8_t mask;
+	uint8_t i;
+
+	for(i = 0, mask = 0x01; i < ARRAY_SIZE(output); i++, mask <<= 1) {
+		if (data & mask)
+			*output[i].port |= output[i].mask;
+		else
+			*output[i].port &= ~output[i].mask;
+	}
+}
+
+
+static void ows_dev_scratchpad_update(uint8_t idx, uint8_t data)
+{
+	uart_puts_P(PSTR("w "));
+	uart_printhex(idx);
+	uart_puts_P(PSTR("="));
+	uart_printhex(data);
+	uart_puts_P(PSTR("\n"));
+
+	switch(idx) {
+	case 0:
+		output_set(data);
+		break;
+	}
+}
+
+static uint8_t ows_dev_handle_cmd(uint8_t byte)
+{
+	switch(byte) {
+	case OWS_DEV_CMD_WRITE_SCRATCHPAD:
+		ows_dev_state = OWS_DEV_WRITE_SCRATCHPAD;
+		return 0;
+	}
+
+	return 0;
+}
+
+static uint8_t ows_dev_handle_write_scratchpad(uint8_t byte)
+{
+	if (ows_dev_scratchpad_idx < ARRAY_SIZE(ows_dev_scratchpad))
+		ows_dev_scratchpad_update(ows_dev_scratchpad_idx, byte);
+
+	ows_dev_scratchpad_idx++;
+
+	return 0;
+}
+
 static uint8_t ows_dev_handle_byte(uint8_t byte)
 {
-	uart_puts_P(PSTR("dev byte "));
-	uart_printhex(byte);
-	uart_puts_P(PSTR("\n"));
+	switch(ows_dev_state) {
+	case OWS_DEV_CMD:
+		return ows_dev_handle_cmd(byte);
+
+	case OWS_DEV_WRITE_SCRATCHPAD:
+		return ows_dev_handle_write_scratchpad(byte);
+	}
 
 	return 0;
 }
@@ -57,6 +142,12 @@ static uint8_t ows_dev_handle_byte(uint8_t byte)
 static uint8_t ows_dev_get_write_data(void)
 {
 	return 0;
+}
+
+static void ows_dev_reset(void)
+{
+	ows_dev_state = OWS_DEV_CMD;
+	ows_dev_scratchpad_idx = 0;
 }
 
 enum ows_net_cmds {
@@ -75,7 +166,7 @@ enum ows_net_state {
 
 // XXX: make progmem and conver all refs to readprogmem
 static uint8_t ows_addr[8] =
-{0xe0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+{0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static uint8_t ows_net_cur_bit;
 static uint8_t ows_net_bit;
@@ -88,6 +179,7 @@ static void ows_net_reset(void)
 	ows_net_bit = 0;
 	ows_net_byte = 0;
 	ows_net_state = OWS_NET_COMMAND;
+	ows_dev_reset();
 }
 
 static uint8_t _shift[8] = {
@@ -535,6 +627,12 @@ void ows_init(void)
 
 int main(void)
 {
+	DDRE |= _BV(3);
+	DDRG |= _BV(5);
+	DDRH |= _BV(4) | _BV(3);
+	
+	DDRB |= _BV(4) | _BV(5) | _BV(6) | _BV(7);
+
 	uart_init(uart_baud(FOSC, 9600));
 	uart_puts_P(PSTR("poop\n"));
 	ows_init();
