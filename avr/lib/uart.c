@@ -61,7 +61,7 @@
 #endif
 
 struct ringbuf {
-	uint8_t		buf[4096];
+	uint8_t		buf[128];
 	uint16_t	rd;
 	uint16_t	wr;
 };
