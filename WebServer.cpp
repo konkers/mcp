@@ -77,6 +77,9 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 	lua_pushnumber(L, pid->getEkt_1());
 	lua_setglobal(L, "pid_ekt_1");
 
+	lua_pushboolean(L, (int) flow);
+	lua_setglobal(L, "flow");
+
 	lua_pushstring(L, errString.c_str());
 	lua_setglobal(L, "err_string");
 
@@ -127,6 +130,10 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 			errString += "can't convert d_term to float\n";
 			dataValid = false;
 		}
+
+		mg_get_var(post_data, post_data_len, "flow", val, sizeof(val));
+
+		flow = !!strcmp(val, "recirc");
 
 		EventQueue::PidUpdateEvent *event =
 			new EventQueue::PidUpdateEvent(set_point, p, i, d);

@@ -14,6 +14,8 @@ private:
 	Pid *pid;
 	struct mg_context *ctx;
 
+	bool flow;
+
 	std::string errString;
 
 	EventQueue *eventQueue;
@@ -28,5 +30,8 @@ public:
 	WebServer(int port, Pid *pid, EventQueue *queue);
 	~WebServer();
 
+	bool getFlow(void) {
+		return flow;
+	}
 };
 #endif /* __WEBSERVER_HPP__ */

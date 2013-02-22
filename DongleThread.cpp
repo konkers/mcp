@@ -119,3 +119,12 @@ void DongleThread::setPower(uint8_t power)
 	dongleLock.unlock();
 	printf("power set to %02x\n", power);
 }
+
+void DongleThread::writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data)
+{
+	dongleLock.lock();
+	d.matchRom(addr);
+	d.writeByte(cmd);
+	d.writeByte(data);
+	dongleLock.unlock();
+}

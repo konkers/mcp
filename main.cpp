@@ -12,7 +12,7 @@ using namespace std;
 #include "TimerThread.hpp"
 #include "WebServer.hpp"
 
-Pid pid(0, 50.0, 0, 0);
+Pid pid(0, 90.0, 9.0, 3.1);
 bool running = true;
 
 void signal_handler(int signum)
@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
 	WebServer server(8080, &pid, &queue);
 	DongleThread dongle(&queue);
 	TimerThread timer(&queue);
+
+	Dongle::Addr valveAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01);
 
 	timer.start();
 	dongle.start();
@@ -67,6 +69,11 @@ int main(int argc, char *argv[])
 			float power = pid.update(tempEvent->getTemp());
 			uint8_t power_1 = power * 255;
 			dongle.setPower(power_1);
+
+			if (server.getFlow())
+				dongle.writeByte(valveAddr, 0x4e, 0);
+			else
+				dongle.writeByte(valveAddr, 0x4e, (1 << 2) | (1 << 3));
 
 			break;
 		}

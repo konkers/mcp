@@ -35,6 +35,7 @@ public:
 	void startConversion(void);
 	void setPower(uint8_t power);
 
+	void writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data);
 };
 
 #endif /* __DONGLETHREAD__HPP__ */

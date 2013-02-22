@@ -32,7 +32,8 @@ MCP_OBJS = main.o \
 	WebServer.o
 
 TEST_OBJS = test.o \
-	Dongle.o
+	Dongle.o \
+	Ds18b20.o
 
 OBJS=${MCP_OBJS} ${TEST_OBJS}
 

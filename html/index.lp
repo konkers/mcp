@@ -27,6 +27,15 @@ end
 	</td></tr>
 	<tr><th>pkt_1:</th><td><? print_float(pid_pkt_1) ?></td></tr>
 	<tr><th>ekt_1:</th><td><? print_float(pid_ekt_1) ?></td></tr>
+	<tr><th>flow:</th><td>
+	    <input type="radio" name="flow" value="recirc" <? 
+if (not flow) then 
+   print("checked") end
+ ?>>Recirculate</input><br />
+	    <input type="radio" name="flow" value="cross" <?
+if (flow) then
+   print("checked") end
+?>>Cross</input>
       </table>
       <input type="submit" value="Update"/>
     </form>
