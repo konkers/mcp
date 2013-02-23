@@ -174,7 +174,7 @@ enum ows_net_state {
 };
 
 // XXX: make progmem and conver all refs to readprogmem
-static uint8_t ows_addr[8] =
+static const PROGMEM uint8_t ows_addr[8] =
 {0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 static uint8_t ows_net_cur_bit;
@@ -192,23 +192,12 @@ static void ows_net_reset(void)
 	ows_dev_reset();
 }
 
-static uint8_t _shift[8] = {
-	1 << 0,
-	1 << 1,
-	1 << 2,
-	1 << 3,
-	1 << 4,
-	1 << 5,
-	1 << 6,
-	1 << 7,
-};
-
 static inline uint8_t ows_net_addr_bit(uint8_t bit)
 {
 	uint8_t addr_bit;
 
-	addr_bit = ows_addr[bit >> 3];
-	addr_bit &= _shift[bit & 0x7];
+	addr_bit =  pgm_read_byte_near(&ows_addr[bit >> 3]);
+	addr_bit &= 1 << (bit & 0x7);
 
 	return addr_bit;
 }
