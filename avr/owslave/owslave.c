@@ -3,7 +3,6 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 
-
 #include <uart.h>
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
@@ -67,7 +66,6 @@ struct output_cfg {
 	uint8_t mask;
 } __attribute__((packed));
 
-
 struct output_cfg output[] = {
 	{&PORTH, _BV(4)},
 	{&PORTH, _BV(3)},
@@ -76,7 +74,6 @@ struct output_cfg output[] = {
 	{&PORTB, _BV(6)},
 	{&PORTB, _BV(7)},
 };
-
 
 static void output_set(uint8_t data)
 {
@@ -90,7 +87,6 @@ static void output_set(uint8_t data)
 			*output[i].port &= ~output[i].mask;
 	}
 }
-
 
 static void ows_dev_scratchpad_update(uint8_t idx, uint8_t data)
 {
@@ -283,7 +279,6 @@ static uint8_t ows_net_handle_command(int bit)
 
 static uint8_t ows_net_handle_addressed(int bit)
 {
-
 	if (ows_net_handle_data_bit(bit))
 		return ows_dev_handle_byte(ows_net_byte);
 
@@ -496,7 +491,6 @@ static void ows_phy_trigger_both(uint8_t edge, uint16_t when,
 	ows_phy_compare_handler = compare_handler;
 }
 
-
 static void ows_phy_handle_idle(void);
 static void ows_phy_handle_reset0(void);
 static void ows_phy_handle_reset1(void);
@@ -524,7 +518,6 @@ static void ows_phy_handle_idle(void)
 	/* XXX: this should not be needed */
 	if (ows_phy_read())
 		return;
-
 
 	if (ows_phy_write_bytes > 0) {
 		ows_phy_drive(ows_net_get_write_data());
@@ -595,12 +588,8 @@ ISR(TIMER_COMPA_vect)
 	ows_phy_compare_handler();
 }
 
-
-
-
 void ows_init(void)
 {
-
 	/* no output compare */
 	/* normal waveform generation wgm[3:0] = 0000b */
 	TCCRA = 0x0;
@@ -619,7 +608,6 @@ int main(void)
 	DDRE |= _BV(3);
 	DDRG |= _BV(5);
 	DDRH |= _BV(4) | _BV(3);
-	
 	DDRB |= _BV(4) | _BV(5) | _BV(6) | _BV(7);
 
 	uart_init(uart_baud(FOSC, 9600));
@@ -627,6 +615,5 @@ int main(void)
 	ows_init();
 	sei();
 	while (1) {
-		
 	}
 }
