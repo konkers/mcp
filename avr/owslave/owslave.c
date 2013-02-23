@@ -58,6 +58,8 @@ enum ows_dev_state {
 
 uint8_t ows_dev_scratchpad[1];
 uint8_t ows_dev_scratchpad_idx;
+uint8_t ows_dev_byte;
+uint8_t ows_dev_do_commit;
 enum ows_dev_state ows_dev_state;
 
 struct output_cfg {
@@ -133,10 +135,20 @@ static uint8_t ows_dev_handle_byte(uint8_t byte)
 		return ows_dev_handle_cmd(byte);
 
 	case OWS_DEV_WRITE_SCRATCHPAD:
-		return ows_dev_handle_write_scratchpad(byte);
+		ows_dev_byte = byte;
+		ows_dev_do_commit = 1;
+		return 0;
 	}
 
 	return 0;
+}
+
+static void ows_dev_commit(void)
+{
+	if (ows_dev_do_commit)
+		ows_dev_handle_write_scratchpad(ows_dev_byte);
+
+	ows_dev_do_commit = 0;
 }
 
 static uint8_t ows_dev_get_write_data(void)
@@ -148,6 +160,7 @@ static void ows_dev_reset(void)
 {
 	ows_dev_state = OWS_DEV_CMD;
 	ows_dev_scratchpad_idx = 0;
+	ows_dev_do_commit = 0;
 }
 
 enum ows_net_cmds {
@@ -178,6 +191,7 @@ static void ows_net_reset(void)
 {
 	ows_net_bit = 0;
 	ows_net_byte = 0;
+	ows_net_addressed = 0;
 	ows_net_state = OWS_NET_COMMAND;
 	ows_dev_reset();
 }
@@ -347,6 +361,12 @@ static uint8_t ows_net_handle_data(uint8_t bit)
 	}
 
 	return 0;
+}
+
+static void ows_net_commit(void)
+{
+	if (ows_net_state == OWS_NET_ADDRESSED)
+		ows_dev_commit();
 }
 
 static uint8_t ows_phy_read(void)
@@ -540,8 +560,10 @@ static void ows_phy_handle_sample0(void)
 	if (ows_phy_read()) {
 		ows_phy_trigger_edge(0, ows_phy_handle_idle);
 		ows_phy_write_bytes = ows_net_handle_data(1);
+		ows_net_commit();
 	} else {
 		ows_phy_state = OWS_PHY_SAMPLE1;
+		ows_phy_write_bytes = ows_net_handle_data(0);
 		/* between 120 and 480 uS */
 		ows_phy_trigger_both(1, USEC(300),
 				     ows_phy_handle_sample1_capture,
@@ -552,7 +574,7 @@ static void ows_phy_handle_sample0(void)
 static void ows_phy_handle_sample1_capture(void)
 {
 	ows_phy_trigger_edge(0, ows_phy_handle_idle);
-	ows_phy_write_bytes = ows_net_handle_data(0);
+	ows_net_commit();
 }
 static void ows_phy_handle_sample1_compare(void)
 {
