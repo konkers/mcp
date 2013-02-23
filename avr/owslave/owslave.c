@@ -504,7 +504,6 @@ static void ows_phy_handle_idle(void)
 	ows_phy_cycle_start = ICR;
 
 	/* debounce */
-	/* XXX: this should not be needed */
 	if (ows_phy_read())
 		return;
 
