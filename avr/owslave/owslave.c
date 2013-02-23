@@ -378,9 +378,8 @@ static void ows_phy_drive(uint8_t level)
 {
 	if (level) {
 		DDRL &= ~_BV(1);
-//		PORTL |= _BV(0);
 	} else {
-		PORTL &= ~(_BV(1) /*| _BV(0)*/);
+		PORTL &= ~_BV(1);
 		DDRL |= _BV(1);
 	}
 }
@@ -529,7 +528,6 @@ static void ows_phy_handle_idle(void)
 
 	if (ows_phy_write_bytes > 0) {
 		ows_phy_drive(ows_net_get_write_data());
-		PORTL |= _BV(0);
 		ows_phy_trigger_time(USEC(20), ows_phy_handle_write);
 		ows_phy_write_bytes--;
 	} else {
@@ -589,15 +587,12 @@ static void ows_phy_handle_write(void)
 
 ISR(TIMER_CAPT_vect)
 {
-//	PORTL &= ~_BV(0);
 	ows_phy_capture_handler();
 }
 
 ISR(TIMER_COMPA_vect)
 {
-	PORTL &= ~_BV(0);
 	ows_phy_compare_handler();
-//	ows_phy_handle_state(0, 1);
 }
 
 
@@ -614,8 +609,6 @@ void ows_init(void)
 	/* enable Input Capture Noise ICNC1 = 1 */
 	/* set input capture edge select to falling ICES1 = 0 */
 	TCCRB = _BV(ICNC1) | _BV(CS10);
-
-	DDRL |= _BV(0);
 
 	ows_phy_reset();
 }
