@@ -63,15 +63,15 @@ int main(int argc, char *argv[])
 	}
 
 
-	Dongle::Addr outAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01);
-	uint8_t out = 1 << 4;
+	Dongle::Addr outAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+	uint8_t out = 0x1;
 
 	while (running) {
 		d.reset();
 		d.matchRom(outAddr);
 		d.writeByte(0x4e);
 		d.writeByte(out);
-//		out = out ? 0x00 : 0xff;
+		out = ~out;
 		i++;
 		if (heaterTemp) {
 			heaterTemp->startAllConversion();
