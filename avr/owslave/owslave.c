@@ -279,7 +279,7 @@ static uint8_t ows_net_handle_addressed(int bit)
 static uint8_t ows_net_handle_match_rom(uint8_t bit)
 {
 	if (!!ows_net_addr_bit(ows_net_bit) == bit)
-		ows_net_addressed |= 1;
+		ows_net_addressed &= 1;
 	else
 		ows_net_addressed = 0;
 
@@ -294,7 +294,7 @@ static uint8_t ows_net_handle_match_rom(uint8_t bit)
 static uint8_t ows_net_handle_search_rom(uint8_t bit)
 {
 	if (!!ows_net_cur_bit == bit)
-		ows_net_addressed |= 1;
+		ows_net_addressed &= 1;
 	else
 		ows_net_addressed = 0;
 
