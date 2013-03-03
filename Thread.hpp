@@ -87,6 +87,32 @@ public:
 		}
 	};
 
+	class RWLock {
+	private:
+		pthread_rwlock_t lock;
+
+	public:
+		RWLock() {
+			pthread_rwlock_init(&lock, NULL);
+		}
+
+		~RWLock() {
+			pthread_rwlock_destroy(&lock);
+		}
+
+		void rdlock(void) {
+			pthread_rwlock_rdlock(&lock);
+		}
+
+		void wrlock(void) {
+			pthread_rwlock_wrlock(&lock);
+		}
+
+		void unlock(void) {
+			pthread_rwlock_unlock(&lock);
+		}
+	};
+
 private:
 	pthread_t pthread;
 	int rc;

@@ -30,11 +30,11 @@ DongleThread::~DongleThread()
 Ds18b20 *DongleThread::newSensor(Dongle *dongle, Dongle::Addr addr)
 {
 	if (addr == Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01))
-		return new Ds18b20(dongle, addr, 0.25, 100.0);
+		return new Ds18b20(dongle, addr, "RIMS", 0.25, 100.0);
 	else if (addr ==  Dongle::Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b))
-		return new Ds18b20(dongle, addr, 0.375, 99.5625);
+		return new Ds18b20(dongle, addr, addr.getName(), 0.375, 99.5625);
 	else if (addr ==  Dongle::Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a))
-		return new Ds18b20(dongle, addr, 0.25, 99.75);
+		return new Ds18b20(dongle, addr, addr.getName(), 0.25, 99.75);
 	else if (addr.addr[0] == 0x28)
 		return new Ds18b20(dongle, addr);
 	else
@@ -45,6 +45,7 @@ int DongleThread::run(void)
 {
 	int ret;
 	int i;
+	State *state = State::getState();
 
 	printf("1\n");
 	if (!d.connect())
@@ -61,11 +62,12 @@ int DongleThread::run(void)
 		Ds18b20 *ds = newSensor(&d, a);
 		if (ds) {
 			sensors.push_back(ds);
-			sensorMap[a] = ds;
+			state->addTempSensor(ds->getName());
 		}
 	}
 	printf("4\n");
 
+#if 0
 	auto si = sensorMap.find(Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
 	if (si != sensorMap.end()) {
 		heaterTemp = si->second;
@@ -73,8 +75,9 @@ int DongleThread::run(void)
 		printf("Could not find heater temp probe\n");
 		return -1;
 	}
+#endif
 
-	while(running) {
+	while (running) {
 		convCond.lock();
 		while (running && !doConversion)
 			convCond.wait();
@@ -86,11 +89,22 @@ int DongleThread::run(void)
 
 		dongleLock.lock();
 		sensors[0]->startAllConversion();
-		while (!sensors[0]->isConversionDone()) { }
+		while (!sensors[0]->isConversionDone()) {
+			if (!running) {
+				dongleLock.unlock();
+				break;
+			}
+		}
 
-		EventQueue::TempUpdateEvent *event =
-			new EventQueue::TempUpdateEvent(heaterTemp->getTemp());
+		for (auto sensor : sensors) {
+			sensor->updateTemp();
+			state->updateTempSensor(sensor->getName(), sensor->getTemp());
+		}
+
 		dongleLock.unlock();
+
+		EventQueue::StateUpdateEvent *event =
+			new EventQueue::StateUpdateEvent();
 		eventQueue->postEvent(event);
 	}
 

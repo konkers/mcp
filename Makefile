@@ -27,6 +27,7 @@ MCP_OBJS = main.o \
 	Ds18b20.o \
 	EventQueue.o \
 	Pid.o \
+	State.o \
 	Thread.o \
 	TimerThread.o \
 	WebServer.o

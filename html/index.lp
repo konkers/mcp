@@ -6,6 +6,11 @@
 print_float = function(f)
    print(string.format("%.1f",f))
 end
+
+print_sensor = function(name, temp)
+   print(string.format("<tr><td>%s</td><td>%.1f</td></tr>", name, temp))
+end
+
 ?>
 <html>
   <body>
@@ -39,5 +44,13 @@ if (flow) then
       </table>
       <input type="submit" value="Update"/>
     </form>
+    <table border="1">
+<?
+for name, temp in pairs(sensors) do
+   print_sensor(name, temp);
+end
+?>
+    </table>
+	
   </body>
 </html>

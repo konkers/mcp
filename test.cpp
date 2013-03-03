@@ -15,11 +15,11 @@ using namespace std;
 Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr)
 {
 	if (addr == Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01))
-		return new Ds18b20(dongle, addr, 0.25, 100.0);
+		return new Ds18b20(dongle, addr, "RIMS", 0.25, 100.0);
 	else if (addr ==  Dongle::Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b))
-		return new Ds18b20(dongle, addr, 0.375, 99.5625);
+		return new Ds18b20(dongle, addr, addr.getName(), 0.375, 99.5625);
 	else if (addr ==  Dongle::Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a))
-		return new Ds18b20(dongle, addr, 0.25, 99.75);
+		return new Ds18b20(dongle, addr, addr.getName(), 0.25, 99.75);
 	else if (addr.addr[0] == 0x28)
 		return new Ds18b20(dongle, addr);
 	else

@@ -9,6 +9,7 @@ using namespace std;
 #include "DongleThread.hpp"
 #include "EventQueue.hpp"
 #include "Pid.hpp"
+#include "State.hpp"
 #include "TimerThread.hpp"
 #include "WebServer.hpp"
 
@@ -23,6 +24,8 @@ void signal_handler(int signum)
 
 int main(int argc, char *argv[])
 {
+	State *state = State::getState();
+
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
@@ -61,12 +64,11 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-		case EventQueue::Event::Type::tempUpdate:
+		case EventQueue::Event::Type::stateUpdate:
 		{
-			EventQueue::TempUpdateEvent *tempEvent =
-				static_cast<EventQueue::TempUpdateEvent *>(event);
-			printf("temp %f\n", tempEvent->getTemp());
-			float power = pid.update(tempEvent->getTemp());
+			float temp = state->getTemp("RIMS");
+			printf("temp %f\n", temp);
+			float power = pid.update(temp);
 			uint8_t power_1 = power * 255;
 			dongle.setPower(power_1);
 

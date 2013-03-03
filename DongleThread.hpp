@@ -7,6 +7,7 @@
 #include "Dongle.hpp"
 #include "Ds18b20.hpp"
 #include "EventQueue.hpp"
+#include "State.hpp"
 #include "Thread.hpp"
 
 class DongleThread : public Thread {

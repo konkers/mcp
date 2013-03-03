@@ -9,7 +9,7 @@ class EventQueue {
 public:
 	class Event {
 	public:
-		enum class Type {none, tick, tempUpdate, pidUpdate};
+		enum class Type {none, tick, stateUpdate, pidUpdate};
 
 	private:
 		Type type;
@@ -30,16 +30,11 @@ public:
 		}
 	};
 
-	class TempUpdateEvent : public Event {
+	class StateUpdateEvent : public Event {
 	private:
-		float temp;
 	public:
-		TempUpdateEvent(float temp) :
-			Event(Type::tempUpdate), temp(temp) {
-		}
-
-		float getTemp(void) {
-			return temp;
+		StateUpdateEvent() :
+			Event(Type::stateUpdate){
 		}
 	};
 

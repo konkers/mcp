@@ -3919,15 +3919,18 @@ static void *mmap(void *addr, int64_t len, int prot, int flags, int fd,
 static void lsp(struct mg_connection *conn, const char *p, int64_t len,
                 lua_State *L) {
   int i, j, pos = 0;
+  int err;
 
   for (i = 0; i < len; i++) {
     if (p[i] == '<' && p[i + 1] == '?') {
       for (j = i + 1; j < len ; j++) {
         if (p[j] == '?' && p[j + 1] == '>') {
           mg_write(conn, p + pos, i - pos);
-          if (luaL_loadbuffer(L, p + (i + 2), j - (i + 2), "") == LUA_OK) {
+          if ((err = luaL_loadbuffer(L, p + (i + 2), j - (i + 2), "")) == LUA_OK) {
             lua_pcall(L, 0, LUA_MULTRET, 0);
-          }
+          } else {
+		  printf("luaerr %d\n", err);
+	  }
           pos = j + 2;
           i = pos - 1;
           break;

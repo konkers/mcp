@@ -2,6 +2,7 @@
 
 #include <lua.hpp>
 
+#include "State.hpp"
 #include "Thread.hpp"
 #include "WebServer.hpp"
 
@@ -53,6 +54,7 @@ void *WebServer::callback(enum mg_event event, struct mg_connection *conn)
 bool WebServer::handleInitLua(struct mg_connection *conn)
 {
 	const struct mg_request_info *ri = mg_get_request_info(conn);
+	State *state = State::getState();
 
 	lua_State *L = (lua_State *) ri->ev_data;
 
@@ -82,6 +84,20 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 
 	lua_pushstring(L, errString.c_str());
 	lua_setglobal(L, "err_string");
+
+	lua_newtable(L);
+
+	state->rdlock();
+	auto sensorMap = state->getTempSensorMap();
+	for (auto i : *sensorMap) {
+		State::Temp *t = i.second;
+		lua_pushstring(L, t->getName().c_str());
+		lua_pushnumber(L, t->getTemp());
+		lua_settable(L, -3);
+	}
+	state->unlock();
+
+	lua_setglobal(L, "sensors");
 
 	return true;
 }
