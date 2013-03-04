@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	DongleThread dongle(&queue);
 	TimerThread timer(&queue);
 
-	Dongle::Addr valveAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01);
+	Dongle::Addr valveAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
 
 	timer.start();
 	dongle.start();
