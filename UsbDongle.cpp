@@ -29,21 +29,21 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "Dongle.hpp"
+#include "UsbDongle.hpp"
 
-Dongle::Dongle() :
+UsbDongle::UsbDongle() :
 	debug_level(1), ctx(NULL), dev_handle(NULL), in_ep(-1), out_ep(-1)
 {
 
 }
 
-Dongle::~Dongle()
+UsbDongle::~UsbDongle()
 {
 	if (dev_handle)
 		libusb_close(dev_handle);
 }
 
-int Dongle::debug(int level, const char *fmt, ...)
+int UsbDongle::debug(int level, const char *fmt, ...)
 {
 	int ret;
 
@@ -52,14 +52,14 @@ int Dongle::debug(int level, const char *fmt, ...)
 
 	va_list va;
 	va_start(va, fmt);
-	printf("[Dongle] ");
+	printf("[UsbDongle] ");
 	ret = vprintf(fmt, va);
 	va_end(va);
 
 	return ret;
 }
 
-bool Dongle::openDevice(uint16_t vendor, uint16_t product)
+bool UsbDongle::openDevice(uint16_t vendor, uint16_t product)
 {
 	libusb_device **dev_list;
 	ssize_t len;
@@ -144,7 +144,7 @@ err0:
 	return false;
 }
 
-int Dongle::doCommand(uint8_t *cmd, int cmd_len,
+int UsbDongle::doCommand(uint8_t *cmd, int cmd_len,
 		      uint8_t *read_data, int read_data_len)
 {
 	int len = 0;
@@ -172,13 +172,13 @@ int Dongle::doCommand(uint8_t *cmd, int cmd_len,
 	return len;
 }
 
-int Dongle::doCommand(uint8_t cmd, uint8_t *read_data, int read_data_len)
+int UsbDongle::doCommand(uint8_t cmd, uint8_t *read_data, int read_data_len)
 {
 	return doCommand(&cmd, 1, read_data, read_data_len);
 }
 
 
-int Dongle::enumerate(void)
+int UsbDongle::enumerate(void)
 {
 	uint8_t addrs_buf[4096];
 	int len;
@@ -201,7 +201,7 @@ int Dongle::enumerate(void)
 	return i;
 }
 
-int Dongle::reset(void)
+int UsbDongle::reset(void)
 {
 	uint8_t state;
 	int err;
@@ -213,7 +213,7 @@ int Dongle::reset(void)
 	return state;
 }
 
-int Dongle::matchRom(const Addr addr)
+int UsbDongle::matchRom(const Addr addr)
 {
 	uint8_t cmd[9];
 
@@ -223,12 +223,12 @@ int Dongle::matchRom(const Addr addr)
 	return doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
-int Dongle::skipRom(void)
+int UsbDongle::skipRom(void)
 {
 	return doCommand(OW_SKIP_ROM, NULL, 0);
 }
 
-int Dongle::read(void)
+int UsbDongle::read(void)
 {
 	uint8_t state;
 	int err;
@@ -240,7 +240,7 @@ int Dongle::read(void)
 	return state;
 }
 
-int Dongle::readByte(void)
+int UsbDongle::readByte(void)
 {
 	uint8_t byte;
 	int err;
@@ -252,7 +252,7 @@ int Dongle::readByte(void)
 	return byte;
 }
 
-int Dongle::writeByte(uint8_t data)
+int UsbDongle::writeByte(uint8_t data)
 {
 	uint8_t cmd[2];
 
@@ -263,7 +263,7 @@ int Dongle::writeByte(uint8_t data)
 }
 
 /* HACK until OW pwm device is made */
-int Dongle::setPower(uint8_t power)
+int UsbDongle::setPower(uint8_t power)
 {
 	uint8_t cmd[2];
 
@@ -273,7 +273,7 @@ int Dongle::setPower(uint8_t power)
 	return doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
-bool Dongle::connect(void)
+bool UsbDongle::connect(void)
 {
 	int err;
 
@@ -288,7 +288,7 @@ bool Dongle::connect(void)
 	return true;
 }
 
-Dongle::Addr Dongle::getAddr(unsigned n)
+UsbDongle::Addr UsbDongle::getAddr(unsigned n)
 {
 	if (n < addrs.size())
 		return addrs[n];

@@ -12,7 +12,7 @@ LDFLAGS += -L/opt/local/lib
 endif
 ifeq ($(UNAME),Linux)
 CFLAGS +=
-LDFLAGS += 
+LDFLAGS +=
 endif
 CFLAGS += -DUSE_LUA
 CXXFLAGS = $(CFLAGS) -std=c++11
@@ -22,7 +22,6 @@ LDLIBS := -lusb-1.0
 
 MCP_OBJS = main.o \
 	mongoose.o \
-	Dongle.o \
 	DongleThread.o \
 	Ds18b20.o \
 	EventQueue.o \
@@ -30,11 +29,12 @@ MCP_OBJS = main.o \
 	State.o \
 	Thread.o \
 	TimerThread.o \
+	UsbDongle.o \
 	WebServer.o
 
 TEST_OBJS = test.o \
-	Dongle.o \
-	Ds18b20.o
+	Ds18b20.o \
+	UsbDongle.o
 
 OBJS=${MCP_OBJS} ${TEST_OBJS}
 

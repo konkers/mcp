@@ -1,17 +1,19 @@
 
 #include "DongleThread.hpp"
-
+#include "UsbDongle.hpp"
 using namespace std;
 
 DongleThread::DongleThread(EventQueue *queue) :
 	Thread(), eventQueue(queue), doConversion(false)
 {
+	d = new UsbDongle();
 }
 
 
 DongleThread::~DongleThread()
 {
 	//XXX need to clear sensor list
+	delete d;
 }
 
 
@@ -48,18 +50,18 @@ int DongleThread::run(void)
 	State *state = State::getState();
 
 	printf("1\n");
-	if (!d.connect())
+	if (!d->connect())
 		return -1;
 
 	printf("2\n");
-	ret = d.enumerate();
+	ret = d->enumerate();
 	if (ret < 0)
 		return -1;
 
 	printf("3\n");
 	for (i = 0; i < ret; i++) {
-		Dongle::Addr a = d.getAddr(i);
-		Ds18b20 *ds = newSensor(&d, a);
+		Dongle::Addr a = d->getAddr(i);
+		Ds18b20 *ds = newSensor(d, a);
 		if (ds) {
 			sensors.push_back(ds);
 			state->addTempSensor(ds->getName());
@@ -129,7 +131,7 @@ void DongleThread::startConversion(void)
 void DongleThread::setPower(uint8_t power)
 {
 	dongleLock.lock();
-	d.setPower(power);
+	d->setPower(power);
 	dongleLock.unlock();
 	printf("power set to %02x\n", power);
 }
@@ -137,8 +139,8 @@ void DongleThread::setPower(uint8_t power)
 void DongleThread::writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data)
 {
 	dongleLock.lock();
-	d.matchRom(addr);
-	d.writeByte(cmd);
-	d.writeByte(data);
+	d->matchRom(addr);
+	d->writeByte(cmd);
+	d->writeByte(data);
 	dongleLock.unlock();
 }

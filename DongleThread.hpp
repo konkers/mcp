@@ -18,7 +18,7 @@ private:
 	std::map<Dongle::Addr, Ds18b20 *> sensorMap;
 	Ds18b20 *heaterTemp;
 
-	Dongle d;
+	Dongle *d;
 	Thread::Mutex dongleLock;
 
 	Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr);

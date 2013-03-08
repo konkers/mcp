@@ -10,6 +10,7 @@ using namespace std;
 #include "EventQueue.hpp"
 #include "Pid.hpp"
 #include "TimerThread.hpp"
+#include "UsbDongle.hpp"
 #include "WebServer.hpp"
 
 Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr)
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	Dongle d;
+	UsbDongle d;
 	int ret, i;
 
 	printf("1\n");
