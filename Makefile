@@ -7,7 +7,7 @@ DUNAME := $(shell uname -s)
 ARCH := $(shell uname -m)
 
 ifeq ($(UNAME),Darwin)
-CFLAGS += -I/opt/local/include
+CFLAGS += -I/opt/local/include 
 LDFLAGS += -L/opt/local/lib
 endif
 ifeq ($(UNAME),Linux)
@@ -15,8 +15,8 @@ CFLAGS +=
 LDFLAGS +=
 endif
 CFLAGS += -DUSE_LUA
-CXXFLAGS = $(CFLAGS) -std=c++11
-LDXXFLAGS = $(LDFLAGS)
+CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
+LDXXFLAGS = $(LDFLAGS) -stdlib=libc++
 
 LDLIBS := -lusb-1.0
 
@@ -26,6 +26,7 @@ MCP_OBJS = main.o \
 	Ds18b20.o \
 	EventQueue.o \
 	Pid.o \
+	SimDongle.o \
 	State.o \
 	Thread.o \
 	TimerThread.o \
