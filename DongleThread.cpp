@@ -1,12 +1,11 @@
 
 #include "DongleThread.hpp"
-#include "UsbDongle.hpp"
+
 using namespace std;
 
-DongleThread::DongleThread(EventQueue *queue) :
-	Thread(), eventQueue(queue), doConversion(false)
+DongleThread::DongleThread(Dongle *dongle, EventQueue *queue) :
+	Thread(), eventQueue(queue), d(dongle), doConversion(false)
 {
-	d = new UsbDongle();
 }
 
 

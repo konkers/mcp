@@ -1,3 +1,4 @@
+#include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -9,8 +10,10 @@ using namespace std;
 #include "DongleThread.hpp"
 #include "EventQueue.hpp"
 #include "Pid.hpp"
+#include "SimDongle.hpp"
 #include "State.hpp"
 #include "TimerThread.hpp"
+#include "UsbDongle.hpp"
 #include "WebServer.hpp"
 
 Pid pid(0, 90.0, 9.0, 3.1);
@@ -22,8 +25,35 @@ void signal_handler(int signum)
 	signal(signum, SIG_DFL);
 }
 
+void usage(void)
+{
+	printf("usage: sim <option>\n"
+		"options:\n"
+		"    --sim        enable simuation mode\n");
+}
+
 int main(int argc, char *argv[])
 {
+	bool sim = false;
+
+	{
+		int ch;
+		static struct option longopts[] = {
+			{"sim",		no_argument,	NULL, 's'},
+		};
+
+		while ((ch = getopt_long(argc, argv, "s", longopts, NULL)) != -1)
+			switch (ch) {
+			case 's':
+				sim = true;
+				break;
+
+			default:
+				usage();
+				return 1;
+			}
+	}
+
 	State *state = State::getState();
 
 	signal(SIGINT, signal_handler);
@@ -32,7 +62,13 @@ int main(int argc, char *argv[])
 	EventQueue queue;
 
 	WebServer server(8080, &pid, &queue);
-	DongleThread dongle(&queue);
+	Dongle *d;
+	if (sim)
+		d = new SimDongle();
+	else
+		d = new UsbDongle();
+
+	DongleThread dongle(d, &queue);
 	TimerThread timer(&queue);
 
 	Dongle::Addr valveAddr = Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);

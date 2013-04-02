@@ -30,7 +30,7 @@ protected:
 	virtual void signalStop(void);
 
 public:
-	DongleThread(EventQueue *queue);
+	DongleThread(Dongle *dongle, EventQueue *queue);
 	virtual ~DongleThread();
 
 	void startConversion(void);
