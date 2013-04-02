@@ -1,50 +1,49 @@
-DIRS = lua avr
+## Copyright 2013 Erik Gilling <konkers@konkers.net>
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the Licene.
 
-all: dirs mcp test
+CLEAN_MAKEFILE_LIST := $(MAKEFILE_LIST)
+-include $(BUILD_TOP)/local.mk
 
+all:
 
-DUNAME := $(shell uname -s)
-ARCH := $(shell uname -m)
+include build/build.mk
+MAKEFILE_LIST := $(CLEAN_MAKEFILE_LIST)
 
-ifeq ($(UNAME),Darwin)
-CFLAGS += -I/opt/local/include 
-LDFLAGS += -L/opt/local/lib
-endif
-ifeq ($(UNAME),Linux)
-CFLAGS +=
-LDFLAGS +=
-endif
-CFLAGS += -DUSE_LUA
-CXXFLAGS = $(CFLAGS) -std=c++11 -stdlib=libc++
-LDXXFLAGS = $(LDFLAGS) -stdlib=libc++
+QUIET ?= @
 
-LDLIBS := -lusb-1.0
+include $(BUILD_TOP)/build/host.mk
 
-MCP_OBJS = main.o \
-	mongoose.o \
-	DongleThread.o \
-	Ds18b20.o \
-	EventQueue.o \
-	Pid.o \
-	SimDongle.o \
-	State.o \
-	Thread.o \
-	TimerThread.o \
-	UsbDongle.o \
-	WebServer.o
+M_NAME := mcp
+M_SRCS := main.cpp \
+	DongleThread.cpp \
+	Ds18b20.cpp \
+	EventQueue.cpp \
+	Pid.cpp \
+	SimDongle.cpp \
+	State.cpp \
+	Thread.cpp \
+	TimerThread.cpp \
+	UsbDongle.cpp \
+	WebServer.cpp
+M_LDFLAGS := -lusb-1.0
+M_LIBS := liblua libmongoose
+include $(BUILD_EXECUTABLE)
 
-TEST_OBJS = test.o \
-	Ds18b20.o \
-	UsbDongle.o
+include $(call subdir-mkfiles)
 
-OBJS=${MCP_OBJS} ${TEST_OBJS}
+.PHONY: all
+all: $(TARGETS)
+	@echo $*
 
-TARGETS=mcp test
-
-mcp: $(MCP_OBJS)
-	$(LINKXX) #$(LDXXFLAGS) -o $@ $^ $(LDLIBS)
-
-test: $(TEST_OBJS)
-	$(LINKXX) #$(LDXXFLAGS) -o $@ $^ $(LDLIBS)
-
-include rules.mk
+-include $(DEPS)
