@@ -24,6 +24,19 @@ private:
 
 	std::chrono::system_clock::time_point conversionStart;
 
+	uint16_t tempTo18b20(float temp) {
+		uint16_t val = 0x0;
+		// brain dead way of handling sign extension
+		if (temp < 0) {
+			temp = -temp;
+			val = 0xf800;
+		}
+
+		val |= ((uint16_t)temp * 16) & 0x7ff;
+
+		return val;
+	}
+
 public:
 	SimDongle();
 	virtual ~SimDongle();

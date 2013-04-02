@@ -71,10 +71,12 @@ int SimDongle::readByte(void)
 {
 	int data = 0;
 	if (state == READ_SCRATCHPAD) {
+		uint16_t val = tempTo18b20(64.0);
+
 		if (scratchPadAddr == 0)
-			data = 0x91;
+			data = val & 0xff;
 		else if (scratchPadAddr == 1)
-			data = 0x01;
+			data = val >> 8;
 		else
 			data = 0;
 
