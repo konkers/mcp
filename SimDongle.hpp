@@ -24,6 +24,19 @@ private:
 
 	std::chrono::system_clock::time_point conversionStart;
 
+	float simTemp;
+	float simTempDelta;
+	float simTempMin;
+	float simTempMax;
+
+	void startConversion(void) {
+		conversionStart = std::chrono::system_clock::now();
+		state = CONVERTING;
+		simTemp += simTempDelta;
+		if (simTemp < simTempMin || simTemp > simTempMax)
+			simTempDelta = -simTempDelta;
+	}
+
 	uint16_t tempTo18b20(float temp) {
 		uint16_t val = 0x0;
 		// brain dead way of handling sign extension
@@ -32,7 +45,7 @@ private:
 			val = 0xf800;
 		}
 
-		val |= ((uint16_t)temp * 16) & 0x7ff;
+		val |= (uint16_t)(temp * 16) & 0x7ff;
 
 		return val;
 	}
