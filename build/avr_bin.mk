@@ -23,7 +23,6 @@ $(foreach lib, $(M_LIBS), $(call do-avr-lib,$(lib)))
 
 $(M_OBJS): _INCS := $(M_INCS)
 
-$(info $(M_OBJS))
 $(OUT_AVR_OBJ)/$(M_NAME)/%.o: $(call my-dir)/%.c
 	@$(MKDIR)
 	@echo "  AVRCC   " $<
@@ -40,5 +39,7 @@ $(OUT)/$(M_NAME).bin: $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf
 	@echo "  AVROBJCPY " $@; ${AVR_OBJCOPY} -O binary $^ $@
 
 module_avr_$(M_NAME): $(OUT)/$(M_NAME).bin
+
+$(info avr_module $(M_NAME))
 
 include $(BUILD_TOP)/build/clean-vars.mk

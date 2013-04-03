@@ -18,7 +18,7 @@ $(OUT_AVR_OBJ)/$(M_NAME)/includes/%: $(call my-dir)/%
 	@echo "  INC    " $<
 	$(QUIET)cp $< $@
 
-$(info module $(M_NAME))
+$(info avr_module $(M_NAME))
 
 module_avr_$(M_NAME): $(M_HEADERS)
 
