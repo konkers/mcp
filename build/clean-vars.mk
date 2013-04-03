@@ -7,3 +7,4 @@ M_NAME :=
 M_INCS :=
 M_HEADERS :=
 M_DEPS :=
+M_LDFLAGS :=

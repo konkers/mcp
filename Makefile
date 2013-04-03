@@ -23,6 +23,7 @@ MAKEFILE_LIST := $(CLEAN_MAKEFILE_LIST)
 QUIET ?= @
 
 include $(BUILD_TOP)/build/host.mk
+include $(BUILD_TOP)/build/avr.mk
 
 M_NAME := mcp
 M_SRCS := main.cpp \
