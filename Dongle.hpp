@@ -47,9 +47,9 @@ public:
 		}
 
 		std::string getName(void) {
-			char buf[8 * 3];
+			char buf[64];
 			snprintf(buf, sizeof(buf),
-				 "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+				 "ow%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
 				 addr[0], addr[1], addr[2], addr[3],
 				 addr[4], addr[5], addr[6], addr[7]);
 			return std::string(buf);
