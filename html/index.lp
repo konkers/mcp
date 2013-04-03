@@ -11,6 +11,26 @@ print_sensor = function(name, temp)
    print(string.format("<tr><td>%s</td><td>%.1f</td></tr>", name, temp))
 end
 
+function pairsByKeys (t, f)
+      local a = {}
+      for n in pairs(t) do table.insert(a, n) end
+      table.sort(a, f)
+      local i = 0      -- iterator variable
+      local iter = function ()   -- iterator function
+        i = i + 1
+        if a[i] == nil then return nil
+        else return a[i], t[a[i]]
+        end
+      end
+      return iter
+end
+
+
+
+function add_gauge(name, temp)
+	print(string.format("<div id=\"%s\"></div>", name));
+end
+
 ?>
 <html>
   <body>
@@ -46,11 +66,15 @@ if (flow) then
     </form>
     <table border="1">
 <?
-for name, temp in pairs(sensors) do
+for name, temp in pairsByKeys(sensors) do
    print_sensor(name, temp);
 end
 ?>
     </table>
-	
+<?
+for name, temp in pairsByKeys(sensors) do
+   add_gauge(name, temp);
+end
+?>
   </body>
 </html>
