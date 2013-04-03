@@ -1,0 +1,3 @@
+[submodule "lua/luajson"]
+	path = lua/luajson
+	url = https://github.com/harningt/luajson.git
