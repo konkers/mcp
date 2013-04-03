@@ -3927,10 +3927,16 @@ static void lsp(struct mg_connection *conn, const char *p, int64_t len,
         if (p[j] == '?' && p[j + 1] == '>') {
           mg_write(conn, p + pos, i - pos);
           if ((err = luaL_loadbuffer(L, p + (i + 2), j - (i + 2), "")) == LUA_OK) {
-            lua_pcall(L, 0, LUA_MULTRET, 0);
+            if ((err = lua_pcall(L, 0, LUA_MULTRET, 0))) {
+              fprintf(stderr, "lua couldn't exectute: %s.\n",
+                lua_tostring(L, -1));
+              lua_pop(L, 1);
+            }
           } else {
-		  printf("luaerr %d\n", err);
-	  }
+            fprintf(stderr, "lua couldn't parse: %s.\n",
+              lua_tostring(L, -1));
+            lua_pop(L, 1);
+          }
           pos = j + 2;
           i = pos - 1;
           break;
