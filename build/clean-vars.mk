@@ -8,3 +8,4 @@ M_INCS :=
 M_HEADERS :=
 M_DEPS :=
 M_LDFLAGS :=
+M_CFLAGS :=

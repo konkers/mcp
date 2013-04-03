@@ -26,7 +26,7 @@ endif
 
 M_OBJS := $(M_SRCS:.c=.o)
 M_OBJS := $(M_OBJS:.cpp=.o)
-
+M_INCS := $(M_INCS) $(M_LIBS:%=-I$(OUT_HOST_OBJ)/%/includes)
 M_OBJS := $(addprefix $(OUT_HOST_OBJ)/$(M_NAME)/,$(M_OBJS))
 M_HEADERS := $(addprefix $(OUT_HOST_OBJ)/$(M_NAME)/includes/,$(M_HEADERS))
 
