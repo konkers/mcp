@@ -1,7 +1,5 @@
 #include <string.h>
 
-#include <lua.hpp>
-
 #include "State.hpp"
 #include "Thread.hpp"
 #include "WebServer.hpp"
@@ -49,6 +47,19 @@ void *WebServer::callback(enum mg_event event, struct mg_connection *conn)
 	default:
 		return NULL;
 	}
+}
+
+void WebServer::luaPushTemp(lua_State *L, State::Temp *t)
+{
+	lua_newtable(L);
+
+	lua_pushstring(L, "name");
+	lua_pushstring(L, t->getName().c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "temp");
+	lua_pushnumber(L, t->getTemp());
+	lua_settable(L, -3);
 }
 
 bool WebServer::handleInitLua(struct mg_connection *conn)
@@ -104,11 +115,11 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 
 	state->rdlock();
 	auto sensorMap = state->getTempSensorMap();
+	int sensorIdx = 1;
 	for (auto i : *sensorMap) {
 		State::Temp *t = i.second;
-		lua_pushstring(L, t->getName().c_str());
-		lua_pushnumber(L, t->getTemp());
-		lua_settable(L, -3);
+		luaPushTemp(L, t);
+		lua_rawseti(L, -2, sensorIdx++);
 	}
 	state->unlock();
 

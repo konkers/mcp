@@ -11,24 +11,8 @@ print_sensor = function(name, temp)
    print(string.format("<tr><td>%s</td><td>%.1f</td></tr>", name, temp))
 end
 
-function pairsByKeys (t, f)
-      local a = {}
-      for n in pairs(t) do table.insert(a, n) end
-      table.sort(a, f)
-      local i = 0      -- iterator variable
-      local iter = function ()   -- iterator function
-        i = i + 1
-        if a[i] == nil then return nil
-        else return a[i], t[a[i]]
-        end
-      end
-      return iter
-end
-
-
-
 function add_gauge(name, temp)
-	print(string.format("<div id=\"%s\"></div>", name));
+	print(string.format("<div id=\"gauge_%s\"></div>", name));
 end
 
 ?>
@@ -53,8 +37,8 @@ end
 	<tr><th>pkt_1:</th><td><? print_float(pid_pkt_1) ?></td></tr>
 	<tr><th>ekt_1:</th><td><? print_float(pid_ekt_1) ?></td></tr>
 	<tr><th>flow:</th><td>
-	    <input type="radio" name="flow" value="recirc" <? 
-if (not flow) then 
+	    <input type="radio" name="flow" value="recirc" <?
+if (not flow) then
    print("checked") end
  ?>>Recirculate</input><br />
 	    <input type="radio" name="flow" value="cross" <?
@@ -66,15 +50,16 @@ if (flow) then
     </form>
     <table border="1">
 <?
-for name, temp in pairsByKeys(sensors) do
-   print_sensor(name, temp);
+for i, sensor in ipairs(sensors) do
+   print_sensor(sensor["name"], sensor["temp"]);
 end
 ?>
     </table>
-<?
-for name, temp in pairsByKeys(sensors) do
-   add_gauge(name, temp);
+    <?
+for i, sensor in ipairs(sensors) do
+   add_gauge(sensor["name"], sensor["temp"]);
 end
 ?>
+
   </body>
 </html>
