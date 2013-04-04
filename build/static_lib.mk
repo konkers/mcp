@@ -24,19 +24,16 @@ ifeq "$(M_NAME)" ""
 $(error No module name specified)
 endif
 
-M_OBJS := $(M_SRCS:.c=.o)
-M_OBJS := $(M_OBJS:.cpp=.o)
-M_INCS := $(M_INCS) $(M_LIBS:%=-I$(OUT_HOST_OBJ)/%/includes)
-M_OBJS := $(addprefix $(OUT_HOST_OBJ)/$(M_NAME)/,$(M_OBJS))
-M_HEADERS := $(addprefix $(OUT_HOST_OBJ)/$(M_NAME)/includes/,$(M_HEADERS))
-
-DEPS := $(DEPS) $(M_OBJS:%o=%d)
+ifeq ($(M_LIB_HEADER_DIR),)
+M_LIB_HEADER_DIR := $(call my-dir)
+endif
+HOST_INCS := $(HOST_INCS) -I$(M_LIB_HEADER_DIR)
 
 include $(BUILD_TOP)/build/host-common.mk
 
 $(OUT)/lib/$(M_NAME).a: _OBJS := $(M_OBJS)
 $(OUT)/lib/$(M_NAME).a: _LIBS := $(M_LIBS)
-$(OUT)/lib/$(M_NAME).a: $(M_OBJS) $(M_HEADERS)
+$(OUT)/lib/$(M_NAME).a: $(M_OBJS)
 	@$(MKDIR)
 	@echo "  MKLIB  " $@
 	$(QUIET)rm -f $@

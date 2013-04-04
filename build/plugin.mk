@@ -24,29 +24,32 @@ ifeq "$(M_NAME)" ""
 $(error No module name specified)
 endif
 
-M_OBJS := $(M_SRCS:.c=.o)
-M_OBJS := $(M_OBJS:.cpp=.o)
-M_DEPS := $(M_LIBS:%=module_%)
+ifeq ($(M_LIB_HEADER_DIR),)
+M_LIB_HEADER_DIR := $(call my-dir)
+endif
+HOST_INCS := $(HOST_INCS) -I$(M_LIB_HEADER_DIR)
 
-M_OBJS := $(addprefix $(OUT_HOST_OBJ)/$(M_NAME)/,$(M_OBJS))
-DEPS := $(DEPS) $(M_OBJS:%o=%d)
 
 include $(BUILD_TOP)/build/host-common.mk
-$(OUT)/$(M_NAME): _OBJS := $(M_OBJS)
-$(OUT)/$(M_NAME): _LIBS := $(M_LIBS:lib%=-l%)
-$(OUT)/$(M_NAME): _LDFLAGS := $(M_LDFLAGS)
-$(OUT)/$(M_NAME): $(M_DEPS)
+
+$(OUT)/lib/$(M_NAME).so: _OBJS := $(M_OBJS)
+$(OUT)/lib/$(M_NAME).so: _LIBS := $(M_LIBS:lib%=-l%)
+$(OUT)/lib/$(M_NAME).so: _LDFLAGS := $(M_LDFLAGS)
 ifneq ($(filter %.cpp, $(M_SRCS)),)
-$(OUT)/$(M_NAME): $(M_OBJS)
+$(OUT)/lib/$(M_NAME).so: $(M_OBJS)
 	@echo "  LINK++ " $@ $(M_CXX)
-	$(QUIET)$(CXX) $(HOST_CXXFLAGS) $(HOST_LDXXFLAGS) $(HOST_LIBSXX) $(_LDFLAGS) -o $@ $(_OBJS) $(_LIBS)
+	@$(MKDIR)
+	$(QUIET)$(CXX) $(HOST_CXXFLAGS) $(HOST_SO_LDFLAGS) $(HOST_LDXXFLAGS) \
+	  $(HOST_LIBSXX) $(_LDFLAGS) -o $@ $(_OBJS) $(_LIBS)
 else
-$(OUT)/$(M_NAME): $(M_OBJS)
+$(OUT)/lib/$(M_NAME).so: $(M_OBJS)
 	@echo "  LINK   " $@
-	$(QUIET)$(CC) $(HOST_CFLAGS) $(HOST_LDFLAGS) $(HOST_LIBS) $(_LDFLAGS) -o $@ $(_OBJS) $(_LIBS)
+	@$(MKDIR)
+	$(QUIET)$(CC) $(HOST_CFLAGS) $(HOST_SO_LDFLAGS) $(HOST_LDFLAGS) \
+	  $(HOST_LIBS) $(_LDFLAGS) -o $@ $(_OBJS) $(_LIBS)
 endif
 
-module_$(M_NAME): $(OUT)/$(M_NAME)
+module_$(M_NAME): $(OUT)/lib/$(M_NAME).so
 
 $(info module $(M_NAME))
 

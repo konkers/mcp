@@ -6,31 +6,14 @@ LUA_LIB_SRCS=	lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c liolib.c \
 
 M_NAME := liblua
 M_SRCS := $(LUA_CORE_SRCS) $(LUA_LIB_SRCS)
-M_HEADERS := \
-	lapi.h \
-	lauxlib.h \
-	lcode.h \
-	lctype.h \
-	ldebug.h \
-	ldo.h \
-	lfunc.h \
-	lgc.h \
-	llex.h \
-	llimits.h \
-	lmem.h \
-	lobject.h \
-	lopcodes.h \
-	lparser.h \
-	lstate.h \
-	lstring.h \
-	ltable.h \
-	ltm.h \
-	lua.h \
-	luaconf.h \
-	lualib.h \
-	lundump.h \
-	lvm.h \
-	lzio.h \
-	lua.hpp
+M_LIB_HEADER_DIR := $(call my-dir)
+
+ifeq ("${UNAME}","Linux")
+M_CFLAGS := -DLUA_USE_LINUX
+endif
+
+ifeq ("${UNAME}","Darwin")
+M_CFLAGS := -DLUA_USE_MACOSX
+endif
 
 include $(BUILD_STATIC_LIB)
