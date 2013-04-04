@@ -58,6 +58,21 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 
 	lua_State *L = (lua_State *) ri->ev_data;
 
+	lua_getglobal(L, "package");
+	lua_getfield(L, -1, "path");
+	std::string path = lua_tostring(L, -1);
+	path.append(";lua/luajson/lua/?.lua;lua/lpeg/?.lua");
+	lua_pop(L, 1);
+	lua_pushstring(L, path.c_str());
+	lua_setfield(L, -2, "path");
+	lua_getfield(L, -1, "cpath");
+	std::string cpath = lua_tostring(L, -1);
+	cpath.append(";out/lib/?.so");
+	lua_pop(L, 1);
+	lua_pushstring(L, cpath.c_str());
+	lua_setfield(L, -2, "cpath");
+	lua_pop(L, 1);
+
 	lua_pushnumber(L, pid->getCurTemp());
 	lua_setglobal(L, "cur_temp");
 
