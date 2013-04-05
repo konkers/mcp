@@ -49,7 +49,7 @@ void *WebServer::callback(enum mg_event event, struct mg_connection *conn)
 	}
 }
 
-void WebServer::luaPushTemp(lua_State *L, State::Temp *t)
+void WebServer::luaPushSensor(lua_State *L, State::Temp *t)
 {
 	lua_newtable(L);
 
@@ -60,6 +60,38 @@ void WebServer::luaPushTemp(lua_State *L, State::Temp *t)
 	lua_pushstring(L, "temp");
 	lua_pushnumber(L, t->getTemp());
 	lua_settable(L, -3);
+
+	// HACK! assume PID conection with RIMS
+	if(t->getName() == "RIMS") {
+		lua_pushstring(L, "pid");
+		lua_newtable(L);
+
+		lua_pushstring(L, "set_point");
+		lua_pushnumber(L, pid->getSetPoint());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "p");
+		lua_pushnumber(L, pid->getP());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "i");
+		lua_pushnumber(L, pid->getI());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "d");
+		lua_pushnumber(L, pid->getD());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "pkt_1");
+		lua_pushnumber(L, pid->getPkt_1());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "ekt_1");
+		lua_pushnumber(L, pid->getEkt_1());
+		lua_settable(L, -3);
+
+		lua_settable(L, -3);
+	}
 }
 
 bool WebServer::handleInitLua(struct mg_connection *conn)
@@ -118,7 +150,7 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 	int sensorIdx = 1;
 	for (auto i : *sensorMap) {
 		State::Temp *t = i.second;
-		luaPushTemp(L, t);
+		luaPushSensor(L, t);
 		lua_rawseti(L, -2, sensorIdx++);
 	}
 	state->unlock();
@@ -136,6 +168,11 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 	int post_data_len;
 
 	if (!strcmp(ri->uri, "/pid_update")) {
+		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
+			"Content-Type: application/json\r\n\r\n");
+		mg_printf(conn, "{\"success\": \"yes\"}");
+		return true;
+	} else if (!strcmp(ri->uri, "/update")) {
 		char *endp;
 		bool dataValid = true;
 

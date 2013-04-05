@@ -25,7 +25,7 @@ private:
 	friend void *mg_callback(enum mg_event event, struct mg_connection *conn);
 	void *callback(enum mg_event event, struct mg_connection *conn);
 
-	void luaPushTemp(lua_State *L, State::Temp *t);
+	void luaPushSensor(lua_State *L, State::Temp *t);
 
 	bool handleInitLua(struct mg_connection *conn);
 	bool handleNewRequest(struct mg_connection *conn);

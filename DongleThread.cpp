@@ -1,3 +1,4 @@
+#include <unistd.h>
 
 #include "DongleThread.hpp"
 
@@ -91,6 +92,7 @@ int DongleThread::run(void)
 		dongleLock.lock();
 		sensors[0]->startAllConversion();
 		while (!sensors[0]->isConversionDone()) {
+			usleep(100000);
 			if (!running) {
 				dongleLock.unlock();
 				break;
