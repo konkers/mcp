@@ -1,4 +1,5 @@
 #include <string.h>
+#include <unistd.h>
 
 #include "State.hpp"
 #include "Thread.hpp"
@@ -168,15 +169,11 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 	int post_data_len;
 
 	if (!strcmp(ri->uri, "/pid_update")) {
-		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
-			"Content-Type: application/json\r\n\r\n");
-		mg_printf(conn, "{\"success\": \"yes\"}");
-		return true;
-	} else if (!strcmp(ri->uri, "/update")) {
 		char *endp;
 		bool dataValid = true;
 
-		// User has submitted a form, show submitted data and a variable value
+		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
+			"Content-Type: application/json\r\n\r\n");
 		post_data_len = mg_read(conn, post_data, sizeof(post_data));
 
 		errString.erase();
@@ -189,34 +186,48 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 			dataValid = false;
 		}
 
-		mg_get_var(post_data, post_data_len, "p_term", val, sizeof(val));
+		mg_get_var(post_data, post_data_len, "p", val, sizeof(val));
 		p = strtof(val, &endp);
 		if (endp == val) {
 			errString += "can't convert p_term to float\n";
 			dataValid = false;
 		}
 
-		mg_get_var(post_data, post_data_len, "i_term", val, sizeof(val));
+		mg_get_var(post_data, post_data_len, "i", val, sizeof(val));
 		i = strtof(val, &endp);
 		if (endp == val) {
 			errString += "can't convert i_term to float\n";
 			dataValid = false;
 		}
 
-		mg_get_var(post_data, post_data_len, "d_term", val, sizeof(val));
+		mg_get_var(post_data, post_data_len, "d", val, sizeof(val));
 		d = strtof(val, &endp);
 		if (endp == val) {
 			errString += "can't convert d_term to float\n";
 			dataValid = false;
 		}
 
+		EventQueue::PidUpdateEvent *event =
+			new EventQueue::PidUpdateEvent(set_point, p, i, d);
+		eventQueue->postEvent(event);
+
+		mg_printf(conn, "{\"success\": \"yes\"}");
+
+		return true;
+	} else if (!strcmp(ri->uri, "/update")) {
+		char *endp;
+		bool dataValid = true;
+
+		// User has submitted a form, show submitted data and a variable value
+		post_data_len = mg_read(conn, post_data, sizeof(post_data));
+
+		errString.erase();
+
+
 		mg_get_var(post_data, post_data_len, "flow", val, sizeof(val));
 
 		flow = !!strcmp(val, "recirc");
 
-		EventQueue::PidUpdateEvent *event =
-			new EventQueue::PidUpdateEvent(set_point, p, i, d);
-		eventQueue->postEvent(event);
 
 		const char *host = mg_get_header(conn, "Host");
 		mg_printf(conn, "HTTP/1.1 302 Found\r\n"
