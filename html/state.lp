@@ -5,6 +5,5 @@
 
 json = require("json")
 
-print(json.encode(sensors))
-
+print(json.encode({sensors=sensors, outputs=outputs}))
 ?>

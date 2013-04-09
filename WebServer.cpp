@@ -95,6 +95,23 @@ void WebServer::luaPushSensor(lua_State *L, State::Temp *t)
 	}
 }
 
+void WebServer::luaPushOutput(lua_State *L, State::Output *o)
+{
+	lua_newtable(L);
+
+	lua_pushstring(L, "name");
+	lua_pushstring(L, o->getName().c_str());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "value");
+	lua_pushnumber(L, o->getValue());
+	lua_settable(L, -3);
+
+	lua_pushstring(L, "max_value");
+	lua_pushnumber(L, o->getMaxValue());
+	lua_settable(L, -3);
+}
+
 bool WebServer::handleInitLua(struct mg_connection *conn)
 {
 	const struct mg_request_info *ri = mg_get_request_info(conn);
@@ -145,9 +162,8 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 	lua_setglobal(L, "err_string");
 
 	lua_newtable(L);
-
 	state->rdlock();
-	auto sensorMap = state->getTempSensorMap();
+	auto sensorMap = state->getTempMap();
 	int sensorIdx = 1;
 	for (auto i : *sensorMap) {
 		State::Temp *t = i.second;
@@ -155,8 +171,19 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 		lua_rawseti(L, -2, sensorIdx++);
 	}
 	state->unlock();
-
 	lua_setglobal(L, "sensors");
+
+	lua_newtable(L);
+	state->rdlock();
+	auto outputMap = state->getOutputMap();
+	int outputIdx = 1;
+	for (auto i : *outputMap) {
+		State::Output *o = i.second;
+		luaPushOutput(L, o);
+		lua_rawseti(L, -2, outputIdx++);
+	}
+	state->unlock();
+	lua_setglobal(L, "outputs");
 
 	return true;
 }
@@ -165,12 +192,12 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 {
 	const struct mg_request_info *ri = mg_get_request_info(conn);
 	char post_data[1024], val[sizeof(post_data)];
-	float set_point, p, i, d;
 	int post_data_len;
 
 	if (!strcmp(ri->uri, "/pid_update")) {
 		char *endp;
 		bool dataValid = true;
+		float set_point, p, i, d;
 
 		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
 			"Content-Type: application/json\r\n\r\n");
@@ -209,6 +236,38 @@ bool WebServer::handleNewRequest(struct mg_connection *conn)
 
 		EventQueue::PidUpdateEvent *event =
 			new EventQueue::PidUpdateEvent(set_point, p, i, d);
+		eventQueue->postEvent(event);
+
+		mg_printf(conn, "{\"success\": \"yes\"}");
+
+		return true;
+	} else if (!strcmp(ri->uri, "/output_update")) {
+		char *endp;
+		bool dataValid = true;
+		std::string name;
+		unsigned value;
+
+		mg_printf(conn, "HTTP/1.0 200 OK\r\n"
+			"Content-Type: application/json\r\n\r\n");
+		post_data_len = mg_read(conn, post_data, sizeof(post_data));
+
+		errString.erase();
+
+		// Parse form data. input1 and input2 are guaranteed to be NUL-terminated
+		mg_get_var(post_data, post_data_len, "name", val, sizeof(val));
+		name = val;
+
+		mg_get_var(post_data, post_data_len, "value", val, sizeof(val));
+		value = strtol(val, &endp, 0);
+		if (endp == val) {
+			errString += "can't convert value to unsigned\n";
+			dataValid = false;
+		}
+
+		printf("%s = %d\n", name.c_str(), value);
+
+		EventQueue::OutputUpdateEvent *event =
+			new EventQueue::OutputUpdateEvent(name, value);
 		eventQueue->postEvent(event);
 
 		mg_printf(conn, "{\"success\": \"yes\"}");

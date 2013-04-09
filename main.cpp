@@ -99,7 +99,12 @@ int main(int argc, char *argv[])
 			pid.reset();
 			break;
 		}
-
+		case EventQueue::Event::Type::outputUpdate:
+		{
+			EventQueue::OutputUpdateEvent *outputEvent =
+				static_cast<EventQueue::OutputUpdateEvent *>(event);
+			state->updateOutput(outputEvent->getName(), outputEvent->getValue());
+		}
 		case EventQueue::Event::Type::stateUpdate:
 		{
 			float temp = state->getTemp("RIMS");
@@ -108,10 +113,7 @@ int main(int argc, char *argv[])
 			uint8_t power_1 = power * 255;
 			dongle.setPower(power_1);
 
-			if (server.getFlow())
-				dongle.writeByte(valveAddr, 0x4e, 0);
-			else
-				dongle.writeByte(valveAddr, 0x4e, (1 << 2) | (1 << 3));
+			dongle.sync();
 
 			break;
 		}

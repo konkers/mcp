@@ -12,7 +12,7 @@ DongleThread::DongleThread(Dongle *dongle, EventQueue *queue) :
 
 DongleThread::~DongleThread()
 {
-	//XXX need to clear sensor list
+	//XXX need to clear sensor and output list
 	delete d;
 }
 
@@ -43,6 +43,16 @@ Ds18b20 *DongleThread::newSensor(Dongle *dongle, Dongle::Addr addr)
 		return NULL;
 }
 
+OwIO *DongleThread::newOwIO(Dongle *dongle, Dongle::Addr addr)
+{
+	if (addr == Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)) {
+		const char *names[] = {"hlt", "mlt", "bk"};
+		return new OwIO(dongle, addr, "valve_board", 3, names);
+	} else {
+		return NULL;
+	}
+}
+
 int DongleThread::run(void)
 {
 	int ret;
@@ -64,20 +74,14 @@ int DongleThread::run(void)
 		Ds18b20 *ds = newSensor(d, a);
 		if (ds) {
 			sensors.push_back(ds);
-			state->addTempSensor(ds->getName());
+			state->addTemp(ds->getName());
 		}
+
+		OwIO *ow = newOwIO(d, a);
+		if (ow)
+			outputs.push_back(ow);
 	}
 	printf("4\n");
-
-#if 0
-	auto si = sensorMap.find(Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
-	if (si != sensorMap.end()) {
-		heaterTemp = si->second;
-	} else {
-		printf("Could not find heater temp probe\n");
-		return -1;
-	}
-#endif
 
 	while (running) {
 		convCond.lock();
@@ -101,7 +105,7 @@ int DongleThread::run(void)
 
 		for (auto sensor : sensors) {
 			sensor->updateTemp();
-			state->updateTempSensor(sensor->getName(), sensor->getTemp());
+			state->updateTemp(sensor->getName(), sensor->getTemp());
 		}
 
 		dongleLock.unlock();
@@ -143,5 +147,13 @@ void DongleThread::writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data)
 	d->matchRom(addr);
 	d->writeByte(cmd);
 	d->writeByte(data);
+	dongleLock.unlock();
+}
+
+void DongleThread::sync(void)
+{
+	dongleLock.lock();
+	for (auto output : outputs)
+		output->sync();
 	dongleLock.unlock();
 }

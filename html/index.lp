@@ -11,6 +11,10 @@ function add_gauge(name, temp)
 	print(string.format("<div id=\"gauge_%s\" class=\"mcp_gauge\"></div>\n", name));
 end
 
+function add_switch(name, value)
+  print(string.format("<div id=\"switch_%s\" class=\"mcp_switch\">%d</div>\n", name, value));
+end
+
 ?>
 <html>
   <head>
@@ -19,9 +23,11 @@ end
     <script src="justgage.js"></script>
     <script src="jquery.bpopup.js"></script>
     <script src="mcpgauge.js"></script>
+    <script src="mcpswitch.js"></script>
     <script type='text/javascript'>
 
     var gauges = {};
+    var outputs = {};
 
     $(document).ready(function() {
     	loadState();
@@ -33,9 +39,12 @@ end
     		type: "GET",
     		dataType: "json",
     		success: function(data) {
-    			$.each(data, function(key, sensor) {
+    			$.each(data.sensors, function(key, sensor) {
             gauges[sensor.name].update(sensor);
     			});
+          $.each(data.outputs, function(key, output) {
+            outputs[output.name].update(output);
+          });
     			setTimeout(function() { updateState(); }, 1000);
     		},
 
@@ -50,9 +59,12 @@ end
     		type: "GET",
     		dataType: "json",
     		success: function(data) {
-    			$.each(data, function(key, sensor) {
+    			$.each(data.sensors, function(key, sensor) {
             gauges[sensor.name] = new MCPGauge(sensor);
     			});
+          $.each(data.outputs, function(key, output) {
+            outputs[output.name] = new MCPSwitch(output);
+          });
     			setTimeout(function() { updateState(); }, 1000);
     		},
 
@@ -60,40 +72,7 @@ end
     		},
     	});
     }
-    function drawGauge(sensor) {
-    	var g = new JustGage({
-    		id: "gauge_" + sensor.name,
-    		title: sensor.name,
-    		value: sensor.temp,
-    		decimals: 1,
-    		min: 0,
-    		max: 100,
-    		startAnimationTime: 1,
-    		refreshAnimationTime: 1,
-    		customSectors: [{
-    			color : "#ff0000",
-    			lo : 0,
-    			hi : 61
-    		},{
-    			color : "#ffff00",
-    			lo : 61,
-    			hi : 64.5
-    		}, {
-    			color : "#00ff00",
-    			lo : 64.5,
-    			hi : 65.5
-     		},{
-    			color : "#ffff00",
-    			lo : 65.5,
-    			hi : 69.0
-    		}, {
-    			color : "#ff0000",
-    			lo : 69.0,
-    			hi : 100
-    		}]
-    	});
-    	gauges[sensor.name] = g;
-      }
+
     </script>
     <style>
     .mcp_gauge {
@@ -103,6 +82,9 @@ end
 
     }
     .gauges {
+      clear:both;
+    }
+    .switches {
       clear:both;
     }
     .pid {
@@ -117,22 +99,14 @@ end
         add_gauge(sensor["name"], sensor["temp"]);
       end ?>
     </div>
+    <div id="switches" class="switches">
+      <?
+      for i, output in ipairs(outputs) do
+        add_switch(output["name"], output["value"]);
+      end ?>
+    </div>
     <div>
-      <form method="POST" action="/pid_update">
       <pre><? print(err_string) ?></pre>
-      <table border="1">
-	<tr><th>flow:</th><td>
-	    <input type="radio" name="flow" value="recirc" <?
-if (not flow) then
-   print("checked") end
- ?>>Recirculate</input><br />
-	    <input type="radio" name="flow" value="cross" <?
-if (flow) then
-   print("checked") end
-?>>Cross</input>
-      </table>
-      <input type="submit" value="Update"/>
-    </form>
   </div>
 	<div id="debug"></div>
   </body>

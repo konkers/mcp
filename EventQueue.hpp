@@ -2,6 +2,7 @@
 #define __EVENTQUEUE_HPP__
 
 #include <deque>
+#include <string>
 
 #include "Thread.hpp"
 
@@ -9,7 +10,7 @@ class EventQueue {
 public:
 	class Event {
 	public:
-		enum class Type {none, tick, stateUpdate, pidUpdate};
+		enum class Type {none, tick, stateUpdate, pidUpdate, outputUpdate};
 
 	private:
 		Type type;
@@ -60,6 +61,24 @@ public:
 
 		float getD(void) {
 			return d;
+		}
+	};
+
+	class OutputUpdateEvent : public Event {
+	private:
+		std::string name;
+		unsigned value;
+	public:
+		OutputUpdateEvent(std::string name, unsigned value) :
+			Event(Type::outputUpdate), name(name), value(value){
+		}
+
+		std::string getName(void) {
+			return name;
+		}
+
+		unsigned getValue(void) {
+			return value;
 		}
 	};
 

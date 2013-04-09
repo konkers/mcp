@@ -7,6 +7,7 @@
 #include "Dongle.hpp"
 #include "Ds18b20.hpp"
 #include "EventQueue.hpp"
+#include "OwIO.hpp"
 #include "State.hpp"
 #include "Thread.hpp"
 
@@ -15,13 +16,13 @@ private:
 	EventQueue *eventQueue;
 
 	std::vector<Ds18b20 *> sensors;
-	std::map<Dongle::Addr, Ds18b20 *> sensorMap;
-	Ds18b20 *heaterTemp;
+	std::vector<OwIO *> outputs;
 
 	Dongle *d;
 	Thread::Mutex dongleLock;
 
 	Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr);
+	OwIO *newOwIO(Dongle *dongle, Dongle::Addr addr);
 
 	bool doConversion;
 	Thread::Condition convCond;
@@ -37,6 +38,8 @@ public:
 	void setPower(uint8_t power);
 
 	void writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data);
+
+	void sync(void);
 };
 
 #endif /* __DONGLETHREAD__HPP__ */

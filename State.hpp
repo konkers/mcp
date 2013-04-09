@@ -32,8 +32,38 @@ public:
 		}
 	};
 
+
+	class Output {
+	private:
+		std::string name;
+		unsigned maxValue;
+		unsigned value;
+	public:
+
+		Output(std::string name, unsigned maxValue) :
+		name(name), maxValue(maxValue), value(0) {
+		}
+
+		virtual std::string getName(void) {
+			return name;
+		}
+
+		virtual unsigned getMaxValue(void) {
+			return maxValue;
+		}
+
+		virtual unsigned getValue(void) {
+			return value;
+		}
+
+		virtual void setValue(unsigned value) {
+			this-> value = value;
+		}
+	};
+
 private:
-	std::map<std::string, Temp *> tempSensorMap;
+	std::map<std::string, Temp *> tempMap;
+	std::map<std::string, Output *> outputMap;
 
 	Thread::RWLock		lock;
 
@@ -58,16 +88,27 @@ public:
 		lock.unlock();
 	}
 
-	void addTempSensor(std::string name);
-	void updateTempSensor(std::string name, float temp);
-	void removeTempSensor(std::string name);
-
+	void addTemp(std::string name);
+	void updateTemp(std::string name, float temp);
+	void removeTemp(std::string name);
 	float getTemp(std::string name);
 
+	void addOutput(Output *output);
+	void updateOutput(std::string name, unsigned value);
+	void removeOutput(std::string name);
+	unsigned getOutput(std::string);
+
+
 	// must hold rdlock while using
-	std::map<std::string, Temp *> *getTempSensorMap(void) {
-		return &tempSensorMap;
+	std::map<std::string, Temp *> *getTempMap(void) {
+		return &tempMap;
 	}
+
+	// must hold rdlock while using
+	std::map<std::string, Output *> *getOutputMap(void) {
+		return &outputMap;
+	}
+
 };
 
 #endif /* __STATE_HPP__ */

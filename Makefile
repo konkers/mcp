@@ -30,6 +30,7 @@ M_SRCS := main.cpp \
 	DongleThread.cpp \
 	Ds18b20.cpp \
 	EventQueue.cpp \
+	OwIO.cpp \
 	Pid.cpp \
 	SimDongle.cpp \
 	State.cpp \
