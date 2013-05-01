@@ -1,0 +1,36 @@
+Copyright 2013 Erik Gilling
+
+See also the file LICENSE.txt
+
+------------------------------------------------------------------------
+The purpose of this NOTICE.txt file is to contain notices that are
+required by the copyright owner and their license. Some of the
+accompanying products have an attribution requirement, so see below.
+Other accompanying products do not require attribution, so are not listed.
+
+------------------------------------------------------------------------
+
+libs/lua: Copyright (C) 1994-2012 Lua.org, PUC-Rio.
+	see libs/lua/lua.h for licence
+
+libs/mongoose: Copyright (c) 2004-2013 Sergey Lyubka
+	see libs/mongoose/mongoose.c for licecne
+
+html/jquery.js: Copyright 2005, 2012 jQuery Foundation, Inc. and other contributors
+	see html/jquery.js for licence
+
+html/jquery.bpopup.js: (c) Bjoern Klinggaard - @bklinggaard
+	licence: DWIWYWBPVMS
+
+html/justgage.js: (C) Bojan Djuricic  (@Toorshia)
+	see html/justgague.js for licence
+
+html/raphael.js: Copyright (C) 2008-2012 Dmitry Baranovskiy (http://raphaeljs.com)
+	         Copyright (C) 2008-2012 Sencha Labs (http://sencha.com)
+	see html/raphael.js for licence
+
+lua/lpeg: Copyright (C) 2013 Lua.org, PUC-Rio
+	see lua/lpeg/lpeg.html for licence
+
+lua/luajson: Copyright (c) 2008 Thomas Harning Jr. <harningt@gmail.com>
+	see lua/luajson/LICENCE for licence

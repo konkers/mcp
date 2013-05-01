@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2013 Erik Gilling
 // Based on code Copyright (C) 2012 The Android Open Source Project
 // All rights reserved.
@@ -25,7 +24,7 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
 // OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 // SUCH DAMAGE.
-//
+
 #include <stdarg.h>
 #include <stdio.h>
 
