@@ -12,7 +12,7 @@ function add_gauge(name, temp)
 end
 
 function add_switch(name, value)
-  print(string.format("<div id=\"switch_%s\" class=\"mcp_switch\">%d</div>\n", name, value));
+  print(string.format("<div id=\"switch_%s\" class=\"mcp_switch\"></div>\n", name));
 end
 
 ?>
@@ -79,7 +79,14 @@ end
       float: left;
       width: 250px;
       height: 200px;
-
+      padding-left: 50px;
+      padding-right: 50px;
+    }
+    .mcp_switch {
+      float: left;
+      width: 200px;
+      height: 200px;
+      padding: 50px;
     }
     .gauges {
       clear:both;
@@ -93,8 +100,9 @@ end
     </style>
   </head>
   <body>
-    <div id="gauges" class="gauges">
-      <?
+    <center>
+      <div id="gauges" class="gauges">
+        <?
       for i, sensor in ipairs(sensors) do
         add_gauge(sensor["name"], sensor["temp"]);
       end ?>
@@ -105,6 +113,7 @@ end
         add_switch(output["name"], output["value"]);
       end ?>
     </div>
+  </center>
     <div>
       <pre><? print(err_string) ?></pre>
   </div>
