@@ -3,6 +3,13 @@ MCPGauge = function(sensor) {
 	this.name = sensor.name;
 	this.element = $('#gauge_' + sensor.name);
 	this.element.html('<div class="gage" id="gage_' + sensor.name + '"></div>');
+
+    if ('pid' in sensor) {
+        customSectors = this.genSectors(sensor.pid.set_point, 3);
+    } else {
+        customSectors = [];
+    }
+    console.log(sensor);
 	this.gage = new JustGage({
     		id: "gage_" + sensor.name,
     		title: sensor.name,
@@ -13,27 +20,8 @@ MCPGauge = function(sensor) {
     		max: 100,
     		startAnimationTime: 10,
     		refreshAnimationTime: 10,
-    		customSectors: [{
-    			color : "#ff0000",
-    			lo : 0,
-    			hi : 61
-    		},{
-    			color : "#ffff00",
-    			lo : 61,
-    			hi : 64.5
-    		}, {
-    			color : "#00ff00",
-    			lo : 64.5,
-    			hi : 65.5
-     		},{
-    			color : "#ffff00",
-    			lo : 65.5,
-    			hi : 69.0
-    		}, {
-    			color : "#ff0000",
-    			lo : 69.0,
-    			hi : 100
-    		}]
+            levelColors: ["#0000ff", "#0000ff", "#0000ff"],
+    		customSectors: customSectors
     	});
 
     	if ('pid' in sensor) {
@@ -78,6 +66,10 @@ MCPGauge = function(sensor) {
 }
 
 MCPGauge.prototype.update = function(sensor) {
+    if ('pid' in sensor) {
+        this.gage.config.customSectors = this.genSectors(sensor.pid.set_point, 3);
+        console.log(this.gage.config.customSectors);
+    }
 	this.gage.refresh(sensor.temp);
 	if ('pid' in sensor) {
 		this.updatePid(sensor);
@@ -130,6 +122,27 @@ MCPGauge.prototype.updatePidSettings = function() {
     	});
 }
 
-MCPGauge.prototype.stuff = function() {
-	console.log("stuff");
+MCPGauge.prototype.genSectors = function(setpoint, tolerance) {
+    return [{
+        color : "#ff0000",
+        lo : 0,
+        hi : setpoint - tolerance
+    },{
+        color : "#ffff00",
+        lo : setpoint - tolerance,
+        hi : setpoint - tolerance * 0.5
+    }, {
+        color : "#00ff00",
+        lo : setpoint - tolerance * 0.5,
+        hi : setpoint + tolerance * 0.5
+    },{
+        color : "#ffff00",
+        lo : setpoint + tolerance * 0.5,
+        hi : setpoint + tolerance
+    }, {
+        color : "#ff0000",
+        lo : setpoint + tolerance,
+        hi : 100
+    }]
+
 }
