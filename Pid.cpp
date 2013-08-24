@@ -15,7 +15,8 @@
 #include "Pid.hpp"
 
 Pid::Pid(float setPoint, float p, float i, float d):
-	setPoint(setPoint), p(p), i(i), d(d)
+	setPoint(setPoint), p(p), i(i), d(d),
+	curEktCycles(0), overEktCycles(0), underEktCycles(0)
 {
 	reset();
 }
@@ -51,6 +52,17 @@ float Pid::update(float curTemp)
 		ukt = minUkt;
 	}
 
+	if (ekt > 0 && ekt_1 < 0) {
+		underEktCycles = curEktCycles;
+		curEktCycles = 0;
+	}
+
+	if (ekt < 0 && ekt_1 > 0) {
+		overEktCycles = curEktCycles;
+		curEktCycles = 0;
+	}
+
+	curEktCycles++;
 	pkt_1 = pkt;
 	ekt_1 = ekt;
 	this->curTemp = curTemp;

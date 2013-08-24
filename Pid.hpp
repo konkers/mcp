@@ -26,6 +26,10 @@ private:
 	float pkt_1;
 	float ekt_1;
 
+	unsigned curEktCycles;
+	unsigned overEktCycles;
+	unsigned underEktCycles;
+
 	const float maxUkt = 100.0;
 	const float minUkt = 0.0;
 
@@ -77,6 +81,14 @@ public:
 
 	float getEkt_1(void) {
 		return ekt_1;
+	}
+
+	unsigned getOverCycles(void) {
+		return overEktCycles;
+	}
+
+	unsigned getUnderCycles(void) {
+		return underEktCycles;
 	}
 };
 

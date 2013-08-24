@@ -46,7 +46,10 @@ MCPGauge = function(sensor) {
     			'<tr><th>I Term:</th><td><input type="text" id="pid_' + sensor.name + '_i" /></td></tr>' +
     			'<tr><th>D Term:</th><td><input type="text" id="pid_' + sensor.name + '_d" /></td></tr>' +
     			'<tr><th>pkt_1:</th><td id="pid_' + sensor.name + '_pkt_1"></td></tr>' +
-    			'<tr><th>ekt_1:</th><td id="pid_' + sensor.name + '_ekt_1"></td></tr>' +
+                '<tr><th>ekt_1:</th><td id="pid_' + sensor.name + '_ekt_1"></td></tr>' +
+                '<tr><th>over_cycles:</th><td id="pid_' + sensor.name + '_over_cycles"></td></tr>' +
+                '<tr><th>under_cycles:</th><td id="pid_' + sensor.name + '_under_cycles"></td></tr>' +
+                '<tr><th>total_cycles:</th><td id="pid_' + sensor.name + '_total_cycles"></td></tr>' +
     			'</table>' +
     			'<input type="submit" id="pid_' + sensor.name + '_update" value="Update"/>');
 
@@ -60,7 +63,10 @@ MCPGauge = function(sensor) {
     			'i': $('#pid_' + sensor.name + '_i'),
     			'd': $('#pid_' + sensor.name + '_d'),
     			'pkt_1': $('#pid_' + sensor.name + '_pkt_1'),
-    			'ekt_1': $('#pid_' + sensor.name + '_ekt_1')
+                'ekt_1': $('#pid_' + sensor.name + '_ekt_1'),
+                'under_cycles': $('#pid_' + sensor.name + '_under_cycles'),
+                'over_cycles': $('#pid_' + sensor.name + '_over_cycles'),
+                'total_cycles': $('#pid_' + sensor.name + '_total_cycles')
     		};
     		this.setPid(sensor);
 
@@ -80,8 +86,15 @@ MCPGauge.prototype.update = function(sensor) {
 
 // below are fucntions that should be private if javascript supported that
 MCPGauge.prototype.updatePid = function(sensor) {
+    var overCycles = parseInt(sensor.pid.over_cycles);
+    var underCycles = parseInt(sensor.pid.under_cycles);
+
 	this.pid['pkt_1'].text(sensor.pid.pkt_1.toFixed(2));
-	this.pid['ekt_1'].text(sensor.pid.ekt_1.toFixed(2));
+    this.pid['ekt_1'].text(sensor.pid.ekt_1.toFixed(2));
+
+    this.pid['over_cycles'].text(overCycles);
+    this.pid['under_cycles'].text(underCycles);
+    this.pid['total_cycles'].text(overCycles + underCycles);
 };
 
 MCPGauge.prototype.setPid = function(sensor) {

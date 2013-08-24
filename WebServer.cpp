@@ -105,6 +105,14 @@ void WebServer::luaPushSensor(lua_State *L, State::Temp *t)
 		lua_pushnumber(L, pid->getEkt_1());
 		lua_settable(L, -3);
 
+		lua_pushstring(L, "over_cycles");
+		lua_pushnumber(L, pid->getOverCycles());
+		lua_settable(L, -3);
+
+		lua_pushstring(L, "under_cycles");
+		lua_pushnumber(L, pid->getUnderCycles());
+		lua_settable(L, -3);
+
 		lua_settable(L, -3);
 	}
 }
