@@ -63,6 +63,8 @@ float Pid::update(float curTemp)
 	}
 
 	curEktCycles++;
+
+        gettimeofday(&lastUpdateTime, NULL);
 	pkt_1 = pkt;
 	ekt_1 = ekt;
 	this->curTemp = curTemp;

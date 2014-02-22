@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the Licene.
 
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -176,6 +177,9 @@ bool WebServer::handleInitLua(struct mg_connection *conn)
 
 	lua_pushnumber(L, pid->getEkt_1());
 	lua_setglobal(L, "pid_ekt_1");
+
+	lua_pushnumber(L, pid->getSecondsSinceUpdate());
+	lua_setglobal(L, "pid_last_update");
 
 	lua_pushboolean(L, (int) flow);
 	lua_setglobal(L, "flow");

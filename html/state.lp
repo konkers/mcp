@@ -5,5 +5,5 @@
 
 json = require("json")
 
-print(json.encode({sensors=sensors, outputs=outputs}))
+print(json.encode({pid_last_update=pid_last_update, sensors=sensors, outputs=outputs}))
 ?>

@@ -15,6 +15,9 @@
 #ifndef __PID_HPP__
 #define __PID_HPP__
 
+#include <stdint.h>
+#include <sys/time.h>
+
 class Pid {
 private:
 	float setPoint;
@@ -32,6 +35,8 @@ private:
 
 	const float maxUkt = 100.0;
 	const float minUkt = 0.0;
+
+        struct timeval  lastUpdateTime;
 
 public:
 	Pid(float setPoint, float p, float i, float d);
@@ -90,6 +95,16 @@ public:
 	unsigned getUnderCycles(void) {
 		return underEktCycles;
 	}
+
+        unsigned getSecondsSinceUpdate(void) {
+            struct timeval now;
+            struct timeval diff;
+
+            gettimeofday(&now, NULL);
+            timersub(&now, &lastUpdateTime, &diff);
+
+            return diff.tv_sec;
+        }
 };
 
 #endif /* __PID_HPP__ */

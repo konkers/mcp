@@ -68,7 +68,7 @@ bool UsbDongle::openDevice(uint16_t vendor, uint16_t product)
 	len = libusb_get_device_list(ctx, &dev_list);
 	if (len < 0) {
 		debug(0, "Failed to get device list: %s\n", libusb_error_name(len));
-		return NULL;
+		return false;
 	}
 	for (i = 0; i < len; i++) {
 		struct libusb_device_descriptor dev_desc;
