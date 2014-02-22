@@ -61,7 +61,7 @@
 #endif
 
 struct ringbuf {
-    uint8_t		buf[128];
+    uint8_t		buf[32];
     uint16_t	rd;
     uint16_t	wr;
 };
@@ -113,7 +113,7 @@ void uart_init(uint16_t ubrr)
     UBRRL = (uint8_t)ubrr;
 
     /* enable receiver, transmitter, and reciever interrupt */
-    // UCSRB = _BV(RXEN) | _BV(TXEN) | _BV(RXCIE);
+     UCSRB = _BV(RXEN) | _BV(TXEN) | _BV(RXCIE);
 
     /* Set frame format: 8data, 1stop bit */
 #ifdef NEW_UART
@@ -123,11 +123,7 @@ void uart_init(uint16_t ubrr)
 #endif
 }
 
-#ifdef NEW_UART
-ISR( USART0_TX_vect )
-#else
-ISR( USART_TXC_vect )
-#endif
+ISR( UART_TX_VECT )
 {
     if (!ringbuf_empty(&uart_rb)) {
         UDR = ringbuf_pop(&uart_rb);

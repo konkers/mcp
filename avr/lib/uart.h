@@ -21,7 +21,14 @@
 #include <avr/io.h>
 
 #ifdef UBRR0H
-#define NEW_UART
+#  define NEW_UART
+#  ifdef UBRR1H
+#    define UART_TX_VECT USART0_TX_vect
+#  else
+#    define UART_TX_VECT USART_TX_vect
+#  endif
+#else
+#  define UART_TX_VECT USART_TXC_vect
 #endif
 
 static inline uint16_t uart_baud(uint32_t fosc, uint32_t baud)
