@@ -27,6 +27,9 @@ AVR_CFLAGS := $(AVR_CFLAGS) -mmcu=$(M_CROSS_CPU)
 ifneq ($(M_FOSC),)
 AVR_CFLAGS := $(AVR_CFLAGS) -DFOSC=$(M_FOSC)
 endif
+ifneq ($(M_CFLAGS),)
+AVR_CFLAGS := $(AVR_CFLAGS) $(M_CFLAGS)
+endif
 
 M_OBJS := $(M_SRCS:.c=.o)
 M_OBJS := $(addprefix $(OUT_AVR_OBJ)/$(M_NAME)/,$(M_OBJS))
@@ -53,6 +56,30 @@ $(OUT)/$(M_NAME).bin: $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf
 	@echo "  AVROBJCPY " $@; ${AVR_OBJCOPY} -O binary $^ $@
 
 module_avr_$(M_NAME): $(OUT)/$(M_NAME).bin
+
+ifeq ("$(M_CROSS_CPU)","atmega48")
+AVRDUDE_CPU := m48
+else ifeq ("$(M_CROSS_CPU)","atmega88")
+AVRDUDE_CPU := m88p
+AVRDUDE_FUSES := -U lfuse:w:0xe7:m -U hfuse:w:0xdc:m -U efuse:w:0x01:m
+else ifeq ("$(M_CROSS_CPU)","atmega168")
+AVRDUDE_CPU := m168
+else ifeq ("$(M_CROSS_CPU)","atmega8")
+AVRDUDE_CPU := m8
+AVRDUDE_FUSES := -U lfuse:w:0x3f:m -U hfuse:w:0xd9:m
+endif
+ifeq "$(M_FUSES)" ""
+M_FUSES := $(AVRDUDE_FUSES)
+endif
+
+flash_$(M_NAME): _CPU := $(AVRDUDE_CPU)
+flash_$(M_NAME): _FUSES := $(M_FUSES)
+flash_$(M_NAME): $(OUT)/$(M_NAME).bin
+	echo $(_CPU)
+	avrdude -p $(_CPU) -c usbtiny -e -U flash:w:$< $(_FUSES)
+
+AVRDUDE_CPU :=
+AVRDUDE_FUSES :=
 
 $(info avr_module $(M_NAME))
 
