@@ -34,10 +34,11 @@ $(eval \
 M_OBJS := $(M_OBJS) $(OUT_AVR_OBJ)/$(M_NAME)/$(1)-$(src:%.c=%.o)\
 );\
 $(eval \
+$(OUT_AVR_OBJ)/$(M_NAME)/$(1)-$(src:%.c=%.o): _CFLAGS := $(M_AVR_CFLAGS)
 $(OUT_AVR_OBJ)/$(M_NAME)/$(1)-$(src:%.c=%.o): $(AVR_LIB_$(1)_DIR)/$(src)
 	@$$(MKDIR)
 	@echo "  AVRCC  " $$<
-	$$(QUIET)$$(AVR_CC) $$(AVR_CFLAGS) $$(_INCS) -c $$< -o $$@ \
+	$$(QUIET)$$(AVR_CC) $$(_CFLAGS) $$(_INCS) -c $$< -o $$@ \
 -MD -MT $$@ -MF $$(@:%o=%d)
 )\
 )

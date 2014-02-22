@@ -23,12 +23,12 @@ ifeq "$(M_NAME)" ""
 $(error No module name specified)
 endif
 
-AVR_CFLAGS := $(AVR_CFLAGS) -mmcu=$(M_CROSS_CPU)
+M_AVR_CFLAGS := $(AVR_CFLAGS) -mmcu=$(M_CROSS_CPU)
 ifneq ($(M_FOSC),)
-AVR_CFLAGS := $(AVR_CFLAGS) -DFOSC=$(M_FOSC)
+M_AVR_CFLAGS := $(M_AVR_CFLAGS) -DFOSC=$(M_FOSC)
 endif
 ifneq ($(M_CFLAGS),)
-AVR_CFLAGS := $(AVR_CFLAGS) $(M_CFLAGS)
+M_AVR_CFLAGS := $(M_AVR_CFLAGS) $(M_CFLAGS)
 endif
 
 M_OBJS := $(M_SRCS:.c=.o)
@@ -38,18 +38,20 @@ M_DEPS := $(M_LIBS:%=module_avr_%)
 
 $(foreach lib, $(M_LIBS), $(call do-avr-lib,$(lib)))
 
-$(M_OBJS): _INCS := $(M_INCS)
 
+$(OUT_AVR_OBJ)/$(M_NAME)/%.o: _INCS := $(M_INCS)
+$(OUT_AVR_OBJ)/$(M_NAME)/%.o: _CFLAGS := $(M_AVR_CFLAGS)
 $(OUT_AVR_OBJ)/$(M_NAME)/%.o: $(call my-dir)/%.c
 	@$(MKDIR)
 	@echo "  AVRCC   " $<
-	$(QUIET)$(AVR_CC) $(AVR_CFLAGS) $(_INCS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
+	$(QUIET)$(AVR_CC) $(_CFLAGS) $(_INCS) -c $< -o $@ -MD -MT $@ -MF $(@:%o=%d)
 
 $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf: _OBJS := $(M_OBJS)
+$(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf: _CFLAGS := $(M_AVR_CFLAGS)
 $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf: _LDFLAGS := $(M_LDFLAGS)
 $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf: $(M_OBJS)
 	@echo " AVRLINK " $@
-	$(QUIET)$(AVR_CC) $(AVR_CFLAGS) $(AVR_LDFLAGS) $(AVR_LIBS) \
+	$(QUIET)$(AVR_CC) $(_CFLAGS) $(AVR_LDFLAGS) $(AVR_LIBS) \
 		$(_LDFLAGS) -o $@ $(_OBJS) $(_LIBS)
 
 $(OUT)/$(M_NAME).bin: $(OUT_AVR_OBJ)/$(M_NAME)/$(M_NAME).elf
@@ -80,6 +82,7 @@ flash_$(M_NAME): $(OUT)/$(M_NAME).bin
 
 AVRDUDE_CPU :=
 AVRDUDE_FUSES :=
+M_AVR_CFLAGS :=
 
 $(info avr_module $(M_NAME))
 
