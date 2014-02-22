@@ -26,31 +26,31 @@
 
 class WebServer {
 private:
-	int port;
-	Pid *pid;
-	struct mg_context *ctx;
+    int port;
+    Pid *pid;
+    struct mg_context *ctx;
 
-	bool flow;
+    bool flow;
 
-	std::string errString;
+    std::string errString;
 
-	EventQueue *eventQueue;
+    EventQueue *eventQueue;
 
-	friend void *mg_callback(enum mg_event event, struct mg_connection *conn);
-	void *callback(enum mg_event event, struct mg_connection *conn);
+    friend void *mg_callback(enum mg_event event, struct mg_connection *conn);
+    void *callback(enum mg_event event, struct mg_connection *conn);
 
-	void luaPushSensor(lua_State *L, State::Temp *t);
-	void luaPushOutput(lua_State *L, State::Output *o);
+    void luaPushSensor(lua_State *L, State::Temp *t);
+    void luaPushOutput(lua_State *L, State::Output *o);
 
-	bool handleInitLua(struct mg_connection *conn);
-	bool handleNewRequest(struct mg_connection *conn);
+    bool handleInitLua(struct mg_connection *conn);
+    bool handleNewRequest(struct mg_connection *conn);
 
 public:
-	WebServer(int port, Pid *pid, EventQueue *queue);
-	~WebServer();
+    WebServer(int port, Pid *pid, EventQueue *queue);
+    ~WebServer();
 
-	bool getFlow(void) {
-		return flow;
-	}
+    bool getFlow(void) {
+        return flow;
+    }
 };
 #endif /* __WEBSERVER_HPP__ */

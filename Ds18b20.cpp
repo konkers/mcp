@@ -22,50 +22,50 @@
 #define DS18B20_CMD_READ_PS		0xb4
 
 Ds18b20::Ds18b20(Dongle *dongle, Dongle::Addr addr, std::string name, float cal0, float cal100) :
-	dongle(dongle), addr(addr), name(name) {
-	offset = -cal0;
-	scale = 100.0 / (cal100 - cal0);
-}
+    dongle(dongle), addr(addr), name(name) {
+        offset = -cal0;
+        scale = 100.0 / (cal100 - cal0);
+    }
 
 Ds18b20::Ds18b20(Dongle *dongle, Dongle::Addr addr) :
-	dongle(dongle), addr(addr), offset(0.0), scale(1.0) {
-	name = addr.getName();
-}
+    dongle(dongle), addr(addr), offset(0.0), scale(1.0) {
+        name = addr.getName();
+    }
 
 void Ds18b20::startConversion(void)
 {
-	dongle->reset();
-	dongle->matchRom(addr);
-	dongle->writeByte(DS18B20_CMD_CONVERT_T);
+    dongle->reset();
+    dongle->matchRom(addr);
+    dongle->writeByte(DS18B20_CMD_CONVERT_T);
 }
 
 void Ds18b20::startAllConversion(void)
 {
-	dongle->reset();
-	dongle->skipRom();
-	dongle->writeByte(DS18B20_CMD_CONVERT_T);
+    dongle->reset();
+    dongle->skipRom();
+    dongle->writeByte(DS18B20_CMD_CONVERT_T);
 }
 
 bool Ds18b20::isConversionDone(void)
 {
-	return dongle->read() == 1;
+    return dongle->read() == 1;
 }
 
 void Ds18b20::updateTemp(void)
 {
-	unsigned val;
-	float newTemp;
+    unsigned val;
+    float newTemp;
 
-	dongle->reset();
-	dongle->matchRom(addr);
-	dongle->writeByte(DS18B20_CMD_READ_SCRATCHPAD);
+    dongle->reset();
+    dongle->matchRom(addr);
+    dongle->writeByte(DS18B20_CMD_READ_SCRATCHPAD);
 
 
-	val = dongle->readByte();
-	val |= dongle->readByte() << 8;
-	newTemp = (val >> 4) + (val & 0xf) * (1.0/16.0);
-	newTemp -= offset;
-	newTemp *= scale;
+    val = dongle->readByte();
+    val |= dongle->readByte() << 8;
+    newTemp = (val >> 4) + (val & 0xf) * (1.0/16.0);
+    newTemp -= offset;
+    newTemp *= scale;
 
-	temp = newTemp;
+    temp = newTemp;
 }

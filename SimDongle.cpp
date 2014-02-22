@@ -2,14 +2,6 @@
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
 // limitations under the Licene.
 
 #include <stdarg.h>
@@ -28,11 +20,11 @@ using namespace std;
 
 SimDongle::SimDongle() : state(RESET), simTemp(65), simTempDelta(0.1), simTempMin(60), simTempMax(70)
 {
-	addrs.push_back(Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
-	addrs.push_back(Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b));
-	addrs.push_back(Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a));
-	addrs.push_back(Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00));
-	addrs.push_back(Addr(0x28, 0x99, 0xbd, 0xf4, 0x03, 0x00, 0x00, 0x01));
+    addrs.push_back(Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01));
+    addrs.push_back(Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b));
+    addrs.push_back(Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a));
+    addrs.push_back(Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00));
+    addrs.push_back(Addr(0x28, 0x99, 0xbd, 0xf4, 0x03, 0x00, 0x00, 0x01));
 }
 
 SimDongle::~SimDongle()
@@ -41,103 +33,103 @@ SimDongle::~SimDongle()
 
 int SimDongle::enumerate(void)
 {
-	return addrs.size();
+    return addrs.size();
 }
 
 int SimDongle::reset(void)
 {
-	state = RESET;
-	return 0;
+    state = RESET;
+    return 0;
 }
 
 int SimDongle::matchRom(const Addr addr)
 {
-	if (state == RESET) {
-		state = MATCH_ROM;
-		matchAddr = addr;
-	}
-	return 0;
+    if (state == RESET) {
+        state = MATCH_ROM;
+        matchAddr = addr;
+    }
+    return 0;
 }
 
 int SimDongle::skipRom(void)
 {
-	if (state == RESET)
-		state = SKIP_ROM;
-	return 0;
+    if (state == RESET)
+        state = SKIP_ROM;
+    return 0;
 }
 
 int SimDongle::read(void)
 {
-	if (state == CONVERTING) {
-		chrono::system_clock::time_point now =
-			chrono::system_clock::now();
-		if (now - conversionStart > chrono::milliseconds(750)) {
-			state = RESET;
-			return 1;
-		} else {
-			return 0;
-		}
+    if (state == CONVERTING) {
+        chrono::system_clock::time_point now =
+            chrono::system_clock::now();
+        if (now - conversionStart > chrono::milliseconds(750)) {
+            state = RESET;
+            return 1;
+        } else {
+            return 0;
+        }
 
-	}
-	return 0;
+    }
+    return 0;
 }
 
 int SimDongle::readByte(void)
 {
-	int data = 0;
-	if (state == READ_SCRATCHPAD) {
-		uint16_t val = tempTo18b20(simTemp);
+    int data = 0;
+    if (state == READ_SCRATCHPAD) {
+        uint16_t val = tempTo18b20(simTemp);
 
-		if (scratchPadAddr == 0)
-			data = val & 0xff;
-		else if (scratchPadAddr == 1)
-			data = val >> 8;
-		else
-			data = 0;
+        if (scratchPadAddr == 0)
+            data = val & 0xff;
+        else if (scratchPadAddr == 1)
+            data = val >> 8;
+        else
+            data = 0;
 
-		scratchPadAddr++;
-	}
+        scratchPadAddr++;
+    }
 
-	return data;
+    return data;
 }
 
 int SimDongle::writeByte(uint8_t data)
 {
-	switch(state) {
-	case SKIP_ROM:
-		if (data == CMD_CONVERT_T)
-			startConversion();
+    switch(state) {
+        case SKIP_ROM:
+            if (data == CMD_CONVERT_T)
+                startConversion();
 
-		break;
-	case MATCH_ROM:
-		if (data == CMD_CONVERT_T) {
-			startConversion();
-		} else if (data == CMD_READ_SCRATCHPAD) {
-			scratchPadAddr = 0;
-			state = READ_SCRATCHPAD;
-		}
-		break;
+            break;
+        case MATCH_ROM:
+            if (data == CMD_CONVERT_T) {
+                startConversion();
+            } else if (data == CMD_READ_SCRATCHPAD) {
+                scratchPadAddr = 0;
+                state = READ_SCRATCHPAD;
+            }
+            break;
 
-	default:
-		break;
-	}
-	return 0;
+        default:
+            break;
+    }
+    return 0;
 }
 
 /* HACK until OW pwm device is made */
 int SimDongle::setPower(uint8_t power)
 {
-	return 0;
+    return 0;
 }
 
 bool SimDongle::connect(void)
 {
-	return true;
+    return true;
 }
 
 SimDongle::Addr SimDongle::getAddr(unsigned n)
 {
-	if (n < addrs.size())
-		return addrs[n];
-	return Addr();
+    if (n < addrs.size())
+        return addrs[n];
+    return Addr();
 }

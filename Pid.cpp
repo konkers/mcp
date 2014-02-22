@@ -15,58 +15,58 @@
 #include "Pid.hpp"
 
 Pid::Pid(float setPoint, float p, float i, float d):
-	setPoint(setPoint), p(p), i(i), d(d),
-	curEktCycles(0), overEktCycles(0), underEktCycles(0)
+    setPoint(setPoint), p(p), i(i), d(d),
+    curEktCycles(0), overEktCycles(0), underEktCycles(0)
 {
-	reset();
+    reset();
 }
 
 void Pid::reset(void)
 {
-	pkt_1 = 0.0;
-	ekt_1 = 0.0;
+    pkt_1 = 0.0;
+    ekt_1 = 0.0;
 }
 
 // PID algorithm from "Microcontroller Based Temperature Monitoring and Control"
 // by Dogan Ibrahim page 218
 float Pid::update(float curTemp)
 {
-	// Calculate Error
-	float ekt = setPoint - curTemp;
+    // Calculate Error
+    float ekt = setPoint - curTemp;
 
-	// Calculate I term
-	float pkt = i * ekt + pkt_1;
+    // Calculate I term
+    float pkt = i * ekt + pkt_1;
 
-	// Calculate D term
-	float qkt = d * (ekt - ekt_1);
+    // Calculate D term
+    float qkt = d * (ekt - ekt_1);
 
-	// Calculate PID output
-	float ukt = pkt + p * ekt + qkt;
+    // Calculate PID output
+    float ukt = pkt + p * ekt + qkt;
 
-	// Control for integral windup
-	if (ukt > maxUkt) {
-		pkt = pkt_1;
-		ukt = maxUkt;
-	} else if (ukt < minUkt) {
-		pkt = pkt_1;
-		ukt = minUkt;
-	}
+    // Control for integral windup
+    if (ukt > maxUkt) {
+        pkt = pkt_1;
+        ukt = maxUkt;
+    } else if (ukt < minUkt) {
+        pkt = pkt_1;
+        ukt = minUkt;
+    }
 
-	if (ekt > 0 && ekt_1 < 0) {
-		underEktCycles = curEktCycles;
-		curEktCycles = 0;
-	}
+    if (ekt > 0 && ekt_1 < 0) {
+        underEktCycles = curEktCycles;
+        curEktCycles = 0;
+    }
 
-	if (ekt < 0 && ekt_1 > 0) {
-		overEktCycles = curEktCycles;
-		curEktCycles = 0;
-	}
+    if (ekt < 0 && ekt_1 > 0) {
+        overEktCycles = curEktCycles;
+        curEktCycles = 0;
+    }
 
-	curEktCycles++;
+    curEktCycles++;
 
-        gettimeofday(&lastUpdateTime, NULL);
-	pkt_1 = pkt;
-	ekt_1 = ekt;
-	this->curTemp = curTemp;
-	return ukt / maxUkt;
+    gettimeofday(&lastUpdateTime, NULL);
+    pkt_1 = pkt;
+    ekt_1 = ekt;
+    this->curTemp = curTemp;
+    return ukt / maxUkt;
 }

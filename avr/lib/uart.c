@@ -61,46 +61,46 @@
 #endif
 
 struct ringbuf {
-	uint8_t		buf[128];
-	uint16_t	rd;
-	uint16_t	wr;
+    uint8_t		buf[128];
+    uint16_t	rd;
+    uint16_t	wr;
 };
 
 static inline uint16_t ringbuf_inc(struct ringbuf* rb, uint16_t index)
 {
-	index++;
-	if (index >= sizeof(rb->buf))
-		index = 0;
-	return index;
+    index++;
+    if (index >= sizeof(rb->buf))
+        index = 0;
+    return index;
 }
 
 static inline uint8_t ringbuf_empty(struct ringbuf *rb)
 {
-	return (rb->rd == rb->wr);
+    return (rb->rd == rb->wr);
 }
 
 static inline uint8_t ringbuf_full(struct ringbuf *rb)
 {
-	return (rb->rd == ringbuf_inc(rb, rb->wr));
+    return (rb->rd == ringbuf_inc(rb, rb->wr));
 }
 
 static inline void ringbuf_push(struct ringbuf *rb, uint8_t data)
 {
-	if (!ringbuf_full(rb)) {
-		rb->buf[rb->wr] = data;
-		rb->wr = ringbuf_inc(rb, rb->wr);
-	}
+    if (!ringbuf_full(rb)) {
+        rb->buf[rb->wr] = data;
+        rb->wr = ringbuf_inc(rb, rb->wr);
+    }
 }
 
 static inline uint8_t ringbuf_pop(struct ringbuf *rb)
 {
-	uint8_t data = 0;
-	if (!ringbuf_empty(rb)) {
-		data = rb->buf[rb->rd];
-		rb->rd = ringbuf_inc(rb, rb->rd);
+    uint8_t data = 0;
+    if (!ringbuf_empty(rb)) {
+        data = rb->buf[rb->rd];
+        rb->rd = ringbuf_inc(rb, rb->rd);
 
-	}
-	return data;
+    }
+    return data;
 }
 
 static struct ringbuf uart_rb;
@@ -108,18 +108,18 @@ static uint8_t uart_busy;
 
 void uart_init(uint16_t ubrr)
 {
-	/* atmegaX8 style uart */
-	UBRRH = (uint8_t)(ubrr >> 8);
-	UBRRL = (uint8_t)ubrr;
+    /* atmegaX8 style uart */
+    UBRRH = (uint8_t)(ubrr >> 8);
+    UBRRL = (uint8_t)ubrr;
 
-	/* enable receiver, transmitter, and reciever interrupt */
-	// UCSRB = _BV(RXEN) | _BV(TXEN) | _BV(RXCIE);
+    /* enable receiver, transmitter, and reciever interrupt */
+    // UCSRB = _BV(RXEN) | _BV(TXEN) | _BV(RXCIE);
 
-	/* Set frame format: 8data, 1stop bit */
+    /* Set frame format: 8data, 1stop bit */
 #ifdef NEW_UART
-	UCSRC = _BV(UCSZ1) | _BV(UCSZ0);
+    UCSRC = _BV(UCSZ1) | _BV(UCSZ0);
 #else
-	UCSRC = _BV(URSEL) | _BV(UCSZ1) | _BV(UCSZ0);
+    UCSRC = _BV(URSEL) | _BV(UCSZ1) | _BV(UCSZ0);
 #endif
 }
 
@@ -129,77 +129,77 @@ ISR( USART0_TX_vect )
 ISR( USART_TXC_vect )
 #endif
 {
-	if (!ringbuf_empty(&uart_rb)) {
-		UDR = ringbuf_pop(&uart_rb);
-	} else {
-		uart_disable_tx();
-		uart_busy = 0;
-	}
+    if (!ringbuf_empty(&uart_rb)) {
+        UDR = ringbuf_pop(&uart_rb);
+    } else {
+        uart_disable_tx();
+        uart_busy = 0;
+    }
 }
 
 
 void uart_send(unsigned char data)
 {
-	while (!(UCSRA & _BV(UDRE))) {
-	}
+    while (!(UCSRA & _BV(UDRE))) {
+    }
 
-	UDR = data;
+    UDR = data;
 }
 
 static void uart_kick(void)
 {
-//	cli();
-	if (!uart_busy) {
-		UDR = ringbuf_pop(&uart_rb);
-		uart_enable_tx();
-		uart_busy = 1;
-	}
-//	sei();
+    //	cli();
+    if (!uart_busy) {
+        UDR = ringbuf_pop(&uart_rb);
+        uart_enable_tx();
+        uart_busy = 1;
+    }
+    //	sei();
 }
 
 void uart_putc(unsigned char data)
 {
-	ringbuf_push(&uart_rb, data);
-	uart_kick();
+    ringbuf_push(&uart_rb, data);
+    uart_kick();
 }
 
 void uart_puts(const char *s)
 {
-	while (*s) {
-		ringbuf_push(&uart_rb, *s);
-		s++;
-	}
-	uart_kick();
+    while (*s) {
+        ringbuf_push(&uart_rb, *s);
+        s++;
+    }
+    uart_kick();
 }
 
 void uart_puts_P(const char *s)
 {
-	char c;
+    char c;
 
-	while ((c = pgm_read_byte(s)) != '\0') {
-		ringbuf_push(&uart_rb, c);
-		s++;
-	}
-	uart_kick();
+    while ((c = pgm_read_byte(s)) != '\0') {
+        ringbuf_push(&uart_rb, c);
+        s++;
+    }
+    uart_kick();
 }
 
 const uint8_t PROGMEM hexchars[] = "0123456789ABCDEF";
 
 void uart_printhex(uint8_t val)
 {
-	ringbuf_push(&uart_rb, pgm_read_byte(hexchars + (val >> 4)));
-	ringbuf_push(&uart_rb, pgm_read_byte(hexchars + (val & 0xf)));
+    ringbuf_push(&uart_rb, pgm_read_byte(hexchars + (val >> 4)));
+    ringbuf_push(&uart_rb, pgm_read_byte(hexchars + (val & 0xf)));
 }
 
 int uart_has_data(void)
 {
-	return UCSRA & _BV(RXC);
+    return UCSRA & _BV(RXC);
 }
 
 unsigned char uart_poll_getchar(void)
 {
-	while (!(UCSRA & _BV(RXC))) {
-	}
+    while (!(UCSRA & _BV(RXC))) {
+    }
 
-	return UDR;
+    return UDR;
 }

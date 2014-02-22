@@ -27,33 +27,33 @@
 
 class DongleThread : public Thread {
 private:
-	EventQueue *eventQueue;
+    EventQueue *eventQueue;
 
-	std::vector<Ds18b20 *> sensors;
-	std::vector<OwIO *> outputs;
+    std::vector<Ds18b20 *> sensors;
+    std::vector<OwIO *> outputs;
 
-	Dongle *d;
-	Thread::Mutex dongleLock;
+    Dongle *d;
+    Thread::Mutex dongleLock;
 
-	Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr);
-	OwIO *newOwIO(Dongle *dongle, Dongle::Addr addr);
+    Ds18b20 *newSensor(Dongle *dongle, Dongle::Addr addr);
+    OwIO *newOwIO(Dongle *dongle, Dongle::Addr addr);
 
-	bool doConversion;
-	Thread::Condition convCond;
+    bool doConversion;
+    Thread::Condition convCond;
 protected:
-	virtual int run(void);
-	virtual void signalStop(void);
+    virtual int run(void);
+    virtual void signalStop(void);
 
 public:
-	DongleThread(Dongle *dongle, EventQueue *queue);
-	virtual ~DongleThread();
+    DongleThread(Dongle *dongle, EventQueue *queue);
+    virtual ~DongleThread();
 
-	void startConversion(void);
-	void setPower(uint8_t power);
+    void startConversion(void);
+    void setPower(uint8_t power);
 
-	void writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data);
+    void writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data);
 
-	void sync(void);
+    void sync(void);
 };
 
 #endif /* __DONGLETHREAD__HPP__ */

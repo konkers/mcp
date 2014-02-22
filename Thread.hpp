@@ -20,115 +20,115 @@
 class Thread
 {
 public:
-	class Mutex
-	{
-	private:
-		pthread_mutex_t mutex;
+    class Mutex
+    {
+    private:
+        pthread_mutex_t mutex;
 
-	public:
-		Mutex() {
-			pthread_mutex_init(&mutex, NULL);
-		}
+    public:
+        Mutex() {
+            pthread_mutex_init(&mutex, NULL);
+        }
 
-		~Mutex() {
-			pthread_mutex_destroy(&mutex);
-		}
+        ~Mutex() {
+            pthread_mutex_destroy(&mutex);
+        }
 
-		void lock(void) {
-			pthread_mutex_lock(&mutex);
-		}
+        void lock(void) {
+            pthread_mutex_lock(&mutex);
+        }
 
-		bool tryLock(void) {
-			int err;
+        bool tryLock(void) {
+            int err;
 
-			err = pthread_mutex_trylock(&mutex);
+            err = pthread_mutex_trylock(&mutex);
 
-			return err < 0 ? false : true;
-		}
+            return err < 0 ? false : true;
+        }
 
-		void unlock(void) {
-			pthread_mutex_unlock(&mutex);
-		}
-	};
+        void unlock(void) {
+            pthread_mutex_unlock(&mutex);
+        }
+    };
 
-	class Condition
-	{
-	private:
-		pthread_mutex_t mutex;
-		pthread_cond_t cond;
+    class Condition
+    {
+    private:
+        pthread_mutex_t mutex;
+        pthread_cond_t cond;
 
-	public:
-		Condition() {
-			pthread_mutex_init(&mutex, NULL);
-			pthread_cond_init(&cond, NULL);
-		}
+    public:
+        Condition() {
+            pthread_mutex_init(&mutex, NULL);
+            pthread_cond_init(&cond, NULL);
+        }
 
-		~Condition() {
-			pthread_mutex_destroy(&mutex);
-			pthread_cond_destroy(&cond);
-		}
+        ~Condition() {
+            pthread_mutex_destroy(&mutex);
+            pthread_cond_destroy(&cond);
+        }
 
-		void lock(void) {
-			pthread_mutex_lock(&mutex);
-		}
+        void lock(void) {
+            pthread_mutex_lock(&mutex);
+        }
 
-		void unlock(void) {
-			pthread_mutex_unlock(&mutex);
-		}
+        void unlock(void) {
+            pthread_mutex_unlock(&mutex);
+        }
 
-		void wait(void) {
-			pthread_cond_wait(&cond, &mutex);
-		}
+        void wait(void) {
+            pthread_cond_wait(&cond, &mutex);
+        }
 
-		void signal(void) {
-			pthread_cond_signal(&cond);
-		}
-	};
+        void signal(void) {
+            pthread_cond_signal(&cond);
+        }
+    };
 
-	class RWLock {
-	private:
-		pthread_rwlock_t lock;
+    class RWLock {
+    private:
+        pthread_rwlock_t lock;
 
-	public:
-		RWLock() {
-			pthread_rwlock_init(&lock, NULL);
-		}
+    public:
+        RWLock() {
+            pthread_rwlock_init(&lock, NULL);
+        }
 
-		~RWLock() {
-			pthread_rwlock_destroy(&lock);
-		}
+        ~RWLock() {
+            pthread_rwlock_destroy(&lock);
+        }
 
-		void rdlock(void) {
-			pthread_rwlock_rdlock(&lock);
-		}
+        void rdlock(void) {
+            pthread_rwlock_rdlock(&lock);
+        }
 
-		void wrlock(void) {
-			pthread_rwlock_wrlock(&lock);
-		}
+        void wrlock(void) {
+            pthread_rwlock_wrlock(&lock);
+        }
 
-		void unlock(void) {
-			pthread_rwlock_unlock(&lock);
-		}
-	};
+        void unlock(void) {
+            pthread_rwlock_unlock(&lock);
+        }
+    };
 
 private:
-	pthread_t pthread;
-	int rc;
+    pthread_t pthread;
+    int rc;
 
-	friend void *ThreadStart(void * data);
+    friend void *ThreadStart(void * data);
 
 protected:
-	bool running;
-	virtual int run(void) = 0;
-	virtual void signalStop(void) {
-	}
+    bool running;
+    virtual int run(void) = 0;
+    virtual void signalStop(void) {
+    }
 
 public:
-	Thread();
-	virtual ~Thread();
+    Thread();
+    virtual ~Thread();
 
-	bool start(void);
-	int stop(void);
+    bool start(void);
+    int stop(void);
 };
 
 

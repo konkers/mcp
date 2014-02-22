@@ -24,64 +24,64 @@
 
 class SimDongle : public Dongle {
 private:
-	std::vector<Addr> addrs;
-	enum State {
-		RESET,
-		SKIP_ROM,
-		MATCH_ROM,
-		READ_SCRATCHPAD,
-		CONVERTING,
-	};
-	State state;
-	Addr matchAddr;
-	int scratchPadAddr;
+    std::vector<Addr> addrs;
+    enum State {
+        RESET,
+        SKIP_ROM,
+        MATCH_ROM,
+        READ_SCRATCHPAD,
+        CONVERTING,
+    };
+    State state;
+    Addr matchAddr;
+    int scratchPadAddr;
 
-	std::chrono::system_clock::time_point conversionStart;
+    std::chrono::system_clock::time_point conversionStart;
 
-	float simTemp;
-	float simTempDelta;
-	float simTempMin;
-	float simTempMax;
+    float simTemp;
+    float simTempDelta;
+    float simTempMin;
+    float simTempMax;
 
-	void startConversion(void) {
-		conversionStart = std::chrono::system_clock::now();
-		state = CONVERTING;
-		simTemp += simTempDelta;
-		if (simTemp < simTempMin || simTemp > simTempMax)
-			simTempDelta = -simTempDelta;
-	}
+    void startConversion(void) {
+        conversionStart = std::chrono::system_clock::now();
+        state = CONVERTING;
+        simTemp += simTempDelta;
+        if (simTemp < simTempMin || simTemp > simTempMax)
+            simTempDelta = -simTempDelta;
+    }
 
-	uint16_t tempTo18b20(float temp) {
-		uint16_t val = 0x0;
-		// brain dead way of handling sign extension
-		if (temp < 0) {
-			temp = -temp;
-			val = 0xf800;
-		}
+    uint16_t tempTo18b20(float temp) {
+        uint16_t val = 0x0;
+        // brain dead way of handling sign extension
+        if (temp < 0) {
+            temp = -temp;
+            val = 0xf800;
+        }
 
-		val |= (uint16_t)(temp * 16) & 0x7ff;
+        val |= (uint16_t)(temp * 16) & 0x7ff;
 
-		return val;
-	}
+        return val;
+    }
 
 public:
-	SimDongle();
-	virtual ~SimDongle();
+    SimDongle();
+    virtual ~SimDongle();
 
-	virtual bool connect(void);
+    virtual bool connect(void);
 
-	virtual int enumerate(void);
-	virtual int reset(void);
-	virtual int matchRom(const Addr addr);
-	virtual int skipRom(void);
-	virtual int read(void);
-	virtual int readByte(void);
-	virtual int writeByte(uint8_t data);
+    virtual int enumerate(void);
+    virtual int reset(void);
+    virtual int matchRom(const Addr addr);
+    virtual int skipRom(void);
+    virtual int read(void);
+    virtual int readByte(void);
+    virtual int writeByte(uint8_t data);
 
-	/* HACK until OW pwm device is made */
-	virtual int setPower(uint8_t power);
+    /* HACK until OW pwm device is made */
+    virtual int setPower(uint8_t power);
 
-	virtual Addr getAddr(unsigned n);
+    virtual Addr getAddr(unsigned n);
 };
 
 

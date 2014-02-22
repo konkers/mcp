@@ -20,52 +20,52 @@
 
 void *ThreadStart(void * data)
 {
-	Thread *t = (Thread *) data;
+    Thread *t = (Thread *) data;
 
-	t->running = true;
-	t->rc = t->run();
-	pthread_exit(NULL);
+    t->running = true;
+    t->rc = t->run();
+    pthread_exit(NULL);
 }
 
 Thread::Thread()
 {
-	running = false;
+    running = false;
 }
 
 Thread::~Thread()
 {
-	stop();
+    stop();
 }
 
 
 bool Thread::start(void)
 {
-	int ret;
+    int ret;
 
-	if (!running) {
-		ret = pthread_create(&pthread, NULL, ThreadStart, this);
-		if (ret < 0) {
-			fprintf(stderr, "pthread_create failed: %s\n",
-				strerror(errno));
-			return false;
-		}
-	}
-	return true;
+    if (!running) {
+        ret = pthread_create(&pthread, NULL, ThreadStart, this);
+        if (ret < 0) {
+            fprintf(stderr, "pthread_create failed: %s\n",
+                    strerror(errno));
+            return false;
+        }
+    }
+    return true;
 }
 
 int Thread::stop(void)
 {
-	void *val;
-	int ret;
+    void *val;
+    int ret;
 
-	if (running) {
-		running = false;
-		signalStop();
-		ret = pthread_join(pthread, &val);
-		if (ret < 0)
-			fprintf(stderr, "pthread_join failed: %s\n",
-				strerror(errno));
-	}
-	return rc;
+    if (running) {
+        running = false;
+        signalStop();
+        ret = pthread_join(pthread, &val);
+        if (ret < 0)
+            fprintf(stderr, "pthread_join failed: %s\n",
+                    strerror(errno));
+    }
+    return rc;
 }
 

@@ -19,15 +19,15 @@
 using namespace std;
 
 DongleThread::DongleThread(Dongle *dongle, EventQueue *queue) :
-	Thread(), eventQueue(queue), d(dongle), doConversion(false)
+    Thread(), eventQueue(queue), d(dongle), doConversion(false)
 {
 }
 
 
 DongleThread::~DongleThread()
 {
-	//XXX need to clear sensor and output list
-	delete d;
+    //XXX need to clear sensor and output list
+    delete d;
 }
 
 
@@ -45,135 +45,135 @@ DongleThread::~DongleThread()
 
 Ds18b20 *DongleThread::newSensor(Dongle *dongle, Dongle::Addr addr)
 {
-	if (addr == Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01))
-		return new Ds18b20(dongle, addr, "boil", 0.25, 100.0);
-	else if (addr ==  Dongle::Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b))
-		return new Ds18b20(dongle, addr, addr.getName(), 0.375, 99.5625);
-	else if (addr ==  Dongle::Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a))
-		return new Ds18b20(dongle, addr, "NA", 0.25, 99.75);
-	else if (addr ==  Dongle::Addr(0x28, 0x99, 0xbd, 0xf4, 0x03, 0x00, 0x00, 0x01))
-		return new Ds18b20(dongle, addr, "mlt", 0.25, 99.75);
-	else if (addr ==  Dongle::Addr(0x28, 0x96, 0xb8, 0xf4, 0x03, 0x00, 0x00, 0xf7))
-		return new Ds18b20(dongle, addr, "RIMS", 0, 100);
-	else if (addr ==  Dongle::Addr(0x28, 0x36, 0xbe, 0xf4, 0x03, 0x00, 0x00, 0x37))
-		return new Ds18b20(dongle, addr, "hlt", 0, 100);
-	else if (addr.addr[0] == 0x28)
-		return new Ds18b20(dongle, addr);
-	else
-		return NULL;
+    if (addr == Dongle::Addr(0x28, 0xc5, 0xc5, 0xf4, 0x03, 0x00, 0x00, 0x01))
+        return new Ds18b20(dongle, addr, "boil", 0.25, 100.0);
+    else if (addr ==  Dongle::Addr(0x28, 0x77, 0x02, 0x8d, 0x02, 0x00, 0x00, 0x8b))
+        return new Ds18b20(dongle, addr, addr.getName(), 0.375, 99.5625);
+    else if (addr ==  Dongle::Addr(0x28, 0x55, 0x33, 0x8d, 0x02, 0x00, 0x00, 0x1a))
+        return new Ds18b20(dongle, addr, "NA", 0.25, 99.75);
+    else if (addr ==  Dongle::Addr(0x28, 0x99, 0xbd, 0xf4, 0x03, 0x00, 0x00, 0x01))
+        return new Ds18b20(dongle, addr, "mlt", 0.25, 99.75);
+    else if (addr ==  Dongle::Addr(0x28, 0x96, 0xb8, 0xf4, 0x03, 0x00, 0x00, 0xf7))
+        return new Ds18b20(dongle, addr, "RIMS", 0, 100);
+    else if (addr ==  Dongle::Addr(0x28, 0x36, 0xbe, 0xf4, 0x03, 0x00, 0x00, 0x37))
+        return new Ds18b20(dongle, addr, "hlt", 0, 100);
+    else if (addr.addr[0] == 0x28)
+        return new Ds18b20(dongle, addr);
+    else
+        return NULL;
 }
 
 OwIO *DongleThread::newOwIO(Dongle *dongle, Dongle::Addr addr)
 {
-	if (addr == Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)) {
-		const char *names[] = {"", "bk", "mlt", "hlt"};
-		return new OwIO(dongle, addr, "valve_board", 4, names);
-	} else {
-		return NULL;
-	}
+    if (addr == Dongle::Addr(0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00)) {
+        const char *names[] = {"", "bk", "mlt", "hlt"};
+        return new OwIO(dongle, addr, "valve_board", 4, names);
+    } else {
+        return NULL;
+    }
 }
 
 int DongleThread::run(void)
 {
-	int ret;
-	int i;
-	State *state = State::getState();
+    int ret;
+    int i;
+    State *state = State::getState();
 
-	printf("1\n");
-	if (!d->connect())
-		return -1;
+    printf("1\n");
+    if (!d->connect())
+        return -1;
 
-	printf("2\n");
-	ret = d->enumerate();
-	if (ret < 0)
-		return -1;
+    printf("2\n");
+    ret = d->enumerate();
+    if (ret < 0)
+        return -1;
 
-	printf("3\n");
-	for (i = 0; i < ret; i++) {
-		Dongle::Addr a = d->getAddr(i);
-		Ds18b20 *ds = newSensor(d, a);
-		if (ds) {
-			sensors.push_back(ds);
-			state->addTemp(ds->getName());
-		}
+    printf("3\n");
+    for (i = 0; i < ret; i++) {
+        Dongle::Addr a = d->getAddr(i);
+        Ds18b20 *ds = newSensor(d, a);
+        if (ds) {
+            sensors.push_back(ds);
+            state->addTemp(ds->getName());
+        }
 
-		OwIO *ow = newOwIO(d, a);
-		if (ow)
-			outputs.push_back(ow);
-	}
-	printf("4\n");
+        OwIO *ow = newOwIO(d, a);
+        if (ow)
+            outputs.push_back(ow);
+    }
+    printf("4\n");
 
-	while (running) {
-		convCond.lock();
-		while (running && !doConversion)
-			convCond.wait();
-		doConversion = false;
-		convCond.unlock();
+    while (running) {
+        convCond.lock();
+        while (running && !doConversion)
+            convCond.wait();
+        doConversion = false;
+        convCond.unlock();
 
-		if (!running)
-			break;
+        if (!running)
+            break;
 
-		dongleLock.lock();
-		sensors[0]->startAllConversion();
-		while (!sensors[0]->isConversionDone()) {
-			usleep(100000);
-			if (!running) {
-				dongleLock.unlock();
-				break;
-			}
-		}
+        dongleLock.lock();
+        sensors[0]->startAllConversion();
+        while (!sensors[0]->isConversionDone()) {
+            usleep(100000);
+            if (!running) {
+                dongleLock.unlock();
+                break;
+            }
+        }
 
-		for (auto sensor : sensors) {
-			sensor->updateTemp();
-			state->updateTemp(sensor->getName(), sensor->getTemp());
-		}
+        for (auto sensor : sensors) {
+            sensor->updateTemp();
+            state->updateTemp(sensor->getName(), sensor->getTemp());
+        }
 
-		dongleLock.unlock();
+        dongleLock.unlock();
 
-		EventQueue::StateUpdateEvent *event =
-			new EventQueue::StateUpdateEvent();
-		eventQueue->postEvent(event);
-	}
+        EventQueue::StateUpdateEvent *event =
+            new EventQueue::StateUpdateEvent();
+        eventQueue->postEvent(event);
+    }
 
-	return 0;
+    return 0;
 }
 
 void DongleThread::signalStop(void)
 {
-	convCond.lock();
-	convCond.signal();
-	convCond.unlock();
+    convCond.lock();
+    convCond.signal();
+    convCond.unlock();
 }
 
 void DongleThread::startConversion(void)
 {
-	convCond.lock();
-	doConversion = true;
-	convCond.signal();
-	convCond.unlock();
+    convCond.lock();
+    doConversion = true;
+    convCond.signal();
+    convCond.unlock();
 }
 
 void DongleThread::setPower(uint8_t power)
 {
-	dongleLock.lock();
-	d->setPower(power);
-	dongleLock.unlock();
-	printf("power set to %02x\n", power);
+    dongleLock.lock();
+    d->setPower(power);
+    dongleLock.unlock();
+    printf("power set to %02x\n", power);
 }
 
 void DongleThread::writeByte(Dongle::Addr addr, uint8_t cmd, uint8_t data)
 {
-	dongleLock.lock();
-	d->matchRom(addr);
-	d->writeByte(cmd);
-	d->writeByte(data);
-	dongleLock.unlock();
+    dongleLock.lock();
+    d->matchRom(addr);
+    d->writeByte(cmd);
+    d->writeByte(data);
+    dongleLock.unlock();
 }
 
 void DongleThread::sync(void)
 {
-	dongleLock.lock();
-	for (auto output : outputs)
-		output->sync();
-	dongleLock.unlock();
+    dongleLock.lock();
+    for (auto output : outputs)
+        output->sync();
+    dongleLock.unlock();
 }

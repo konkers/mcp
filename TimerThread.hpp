@@ -20,14 +20,14 @@
 
 class TimerThread : public Thread {
 private:
-	EventQueue *eventQueue;
+    EventQueue *eventQueue;
 
 protected:
-	virtual int run(void);
+    virtual int run(void);
 
 public:
-	TimerThread(EventQueue *queue);
-	virtual ~TimerThread();
+    TimerThread(EventQueue *queue);
+    virtual ~TimerThread();
 };
 
 #endif /* __TIMERTHREAD__HPP__ */

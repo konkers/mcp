@@ -26,60 +26,60 @@
 
 static inline uint16_t uart_baud(uint32_t fosc, uint32_t baud)
 {
-	return fosc / 16 / baud - 1;
+    return fosc / 16 / baud - 1;
 }
 
 static inline uint8_t uart_read_dr(void)
 {
 #ifdef NEW_UART
-	return UDR0;
+    return UDR0;
 #else
-	return UDR;
+    return UDR;
 #endif
 }
 
 static inline void uart_write_dr(uint8_t d)
 {
 #ifdef NEW_UART
-	UDR0 = d;
+    UDR0 = d;
 #else
-	UDR = d;
+    UDR = d;
 #endif
 }
 
 static inline void uart_enable_udre(void)
 {
 #ifdef NEW_UART
-	UCSR0B |= _BV(UDRE0);
+    UCSR0B |= _BV(UDRE0);
 #else
-	UCSRB |= _BV(UDRE);
+    UCSRB |= _BV(UDRE);
 #endif
 }
 
 static inline void uart_disable_udre(void)
 {
 #ifdef NEW_UART
-	UCSR0B &= ~_BV(UDRE0);
+    UCSR0B &= ~_BV(UDRE0);
 #else
-	UCSRB &= ~_BV(UDRE);
+    UCSRB &= ~_BV(UDRE);
 #endif
 }
 
 static inline void uart_enable_tx(void)
 {
 #ifdef NEW_UART
-	UCSR0B |= _BV(TXCIE0);
+    UCSR0B |= _BV(TXCIE0);
 #else
-	UCSRB |= _BV(TXCIE);
+    UCSRB |= _BV(TXCIE);
 #endif
 }
 
 static inline void uart_disable_tx(void)
 {
 #ifdef NEW_UART
-	UCSR0B &= ~_BV(TXCIE0);
+    UCSR0B &= ~_BV(TXCIE0);
 #else
-	UCSRB &= ~_BV(TXCIE);
+    UCSRB &= ~_BV(TXCIE);
 #endif
 }
 
