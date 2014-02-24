@@ -22,7 +22,7 @@ AVR_AR=avr-ar
 AVR_RANLIB=avr-ranlib
 
 AVR_OPT = -g -O2
-AVR_CFLAGS = ${OPT} -Wall -Werror
+AVR_CFLAGS = ${AVR_OPT} -Wall -Werror
 
 #CFLAGS=-mmcu=${CROSS_CPU} ${FOSCCFLAG} ${MCPMAINCFLAG} ${RS485ECHOCFLAG} 
 
