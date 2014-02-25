@@ -77,10 +77,13 @@ int main(int argc, char *argv[])
 
     WebServer server(8080, &pid, &queue);
     Dongle *d;
-    if (sim)
+    UsbDongle *usb_dongle;
+    if (sim) {
         d = new SimDongle();
-    else
-        d = new UsbDongle();
+    } else {
+        usb_dongle = new UsbDongle();
+        d = usb_dongle->getBus(0);
+    }
 
     DongleThread dongle(d, &queue);
     TimerThread timer(&queue);

@@ -24,14 +24,20 @@
 
 #include "Dongle.hpp"
 
-class UsbDongle : public Dongle {
-private:
-    int			debug_level;
-    libusb_context		*ctx;
-    libusb_device_handle	*dev_handle;
-    int			in_ep;
-    int			out_ep;
+class UsbDongle {
+public:
+    UsbDongle();
+    ~UsbDongle();
 
+    Dongle *getBus(size_t i) {
+        if (i >= m_buses.size()) {
+            return nullptr;
+        }
+
+        return m_buses[i];
+    }
+
+private:
     enum {
         OW_ENUMERATE	= 0x0,
         OW_RESET	= 0x1,
@@ -45,32 +51,49 @@ private:
         SET_POWER	= 0x80,
     };
 
-    std::vector<Addr> addrs;
+    class Bus : public Dongle {
+    public:
+        Bus(UsbDongle &parent, size_t index);
+        virtual ~Bus();
+
+        virtual bool connect(void);
+
+        virtual int enumerate(void);
+        virtual int reset(void);
+        virtual int matchRom(const Addr addr);
+        virtual int skipRom(void);
+        virtual int read(void);
+        virtual int readByte(void);
+        virtual int writeByte(uint8_t data);
+
+        /* HACK until OW pwm device is made */
+        virtual int setPower(uint8_t power);
+
+        virtual Addr getAddr(unsigned n);
+
+    private:
+        UsbDongle           &m_parent;
+        size_t              m_index;
+        std::vector<Addr>   m_addrs;
+
+    };
 
     int debug(int level, const char *fmt, ...);
+    bool connect();
     bool openDevice(uint16_t vendor, uint16_t product);
     int doCommand(uint8_t *cmd, int cmd_len,
                   uint8_t *read_data, int read_data_len);
-    int doCommand(uint8_t cmd, uint8_t *read_data, int read_data_len);
+    int doCommand(uint8_t cmd, uint8_t index, uint8_t *read_data, int read_data_len);
 
-public:
-    UsbDongle();
-    virtual ~UsbDongle();
+    int			debug_level = 1;
+    libusb_context		*ctx = nullptr;
+    libusb_device_handle	*dev_handle = nullptr;
+    int			in_ep = -1;
+    int			out_ep = -1;
+    bool                m_connected = false;
 
-    virtual bool connect(void);
+    std::vector<Bus *>  m_buses;
 
-    virtual int enumerate(void);
-    virtual int reset(void);
-    virtual int matchRom(const Addr addr);
-    virtual int skipRom(void);
-    virtual int read(void);
-    virtual int readByte(void);
-    virtual int writeByte(uint8_t data);
-
-    /* HACK until OW pwm device is made */
-    virtual int setPower(uint8_t power);
-
-    virtual Addr getAddr(unsigned n);
 };
 
 #endif /* __USBDONGLE_HPP__ */

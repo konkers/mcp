@@ -30,10 +30,10 @@
 
 #include "UsbDongle.hpp"
 
-UsbDongle::UsbDongle() :
-    debug_level(1), ctx(NULL), dev_handle(NULL), in_ep(-1), out_ep(-1)
+UsbDongle::UsbDongle()
 {
-
+    m_buses.push_back(new Bus(*this, 0));
+    m_buses.push_back(new Bus(*this, 1));
 }
 
 UsbDongle::~UsbDongle()
@@ -51,11 +51,31 @@ int UsbDongle::debug(int level, const char *fmt, ...)
 
     va_list va;
     va_start(va, fmt);
-    printf("[UsbDongle] ");
+    // printf("[UsbDongle] ");
     ret = vprintf(fmt, va);
     va_end(va);
 
     return ret;
+}
+
+bool UsbDongle::connect(void)
+{
+    int err;
+
+    if (m_connected) {
+        return true;
+    }
+
+    err = libusb_init(&ctx);
+    if (err < 0) {
+        debug(0, "USB init failed: %s\n", libusb_error_name(err));
+        return false;
+    }
+    if (!openDevice(0x18d1, 0xbeef))
+        return false;
+
+    m_connected = true;
+    return true;
 }
 
 bool UsbDongle::openDevice(uint16_t vendor, uint16_t product)
@@ -149,6 +169,10 @@ int UsbDongle::doCommand(uint8_t *cmd, int cmd_len,
     int len = 0;
     int err;
 
+    int i;
+    for (i = 0; i < cmd_len; i++) {
+        debug(3, "%x ", cmd[i]);
+    }
     err = libusb_bulk_transfer(dev_handle, out_ep,
                                cmd, cmd_len, &len,
                                1000000);
@@ -166,130 +190,144 @@ int UsbDongle::doCommand(uint8_t *cmd, int cmd_len,
             debug(0, "Bulk transfer error: %s\n", libusb_error_name(err));
             return err;
         }
+
+        debug(3, "-> ");
+
+        for (i = 0; i < len; i++) {
+            debug(3, "%x ", read_data[i]);
+        }
     }
 
+    debug(3, "\n");
     return len;
 }
 
-int UsbDongle::doCommand(uint8_t cmd, uint8_t *read_data, int read_data_len)
+int UsbDongle::doCommand(uint8_t cmd, uint8_t index, uint8_t *read_data, int read_data_len)
 {
-    return doCommand(&cmd, 1, read_data, read_data_len);
+    uint8_t data[2];
+    data[0] = cmd;
+    data[1] = index;
+    return doCommand(data, 2, read_data, read_data_len);
 }
 
 
-int UsbDongle::enumerate(void)
+// ----------------------------------------------------------------------------
+// UsbDongle::Bus
+// ----------------------------------------------------------------------------
+UsbDongle::Bus::Bus(UsbDongle &parent, size_t index)
+    : m_parent(parent),
+      m_index(index) {
+}
+
+UsbDongle::Bus::~Bus() {
+}
+
+int UsbDongle::Bus::enumerate(void)
 {
     uint8_t addrs_buf[4096];
     int len;
     int i;
 
-    len = doCommand(OW_ENUMERATE, addrs_buf, sizeof(addrs_buf));
+    len = m_parent.doCommand(OW_ENUMERATE, m_index, addrs_buf, sizeof(addrs_buf));
     if (len < 0)
         return len;
 
     if ((len % 8) != 0) {
-        debug(1, "enumerate returned %d bytes.  truncated to %d\n",
+        m_parent.debug(1, "enumerate returned %d bytes.  truncated to %d\n",
               len, len - (len % 8));
         len -= len % 8;
     }
 
-    addrs.clear();
+    m_addrs.clear();
     for (i = 0; i < (len / 8) ; i++) {
-        addrs.push_back(Addr(addrs_buf + i * 8));
+        m_addrs.push_back(Addr(addrs_buf + i * 8));
     }
     return i;
 }
 
-int UsbDongle::reset(void)
+int UsbDongle::Bus::reset(void)
 {
     uint8_t state;
     int err;
 
-    err = doCommand(OW_RESET, &state, 1);
+    err = m_parent.doCommand(OW_RESET, m_index, &state, 1);
     if (err < 0)
         return err;
 
     return state;
 }
 
-int UsbDongle::matchRom(const Addr addr)
+int UsbDongle::Bus::matchRom(const Addr addr)
 {
-    uint8_t cmd[9];
+    uint8_t cmd[10];
 
     cmd[0] = OW_MATCH_ROM;
-    memcpy(&cmd[1], addr.addr, 8);
+    cmd[1] = m_index;
+    memcpy(&cmd[2], addr.addr, 8);
 
-    return doCommand(cmd, sizeof(cmd), NULL, 0);
+    return m_parent.doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
-int UsbDongle::skipRom(void)
+int UsbDongle::Bus::skipRom(void)
 {
-    return doCommand(OW_SKIP_ROM, NULL, 0);
+    return m_parent.doCommand(OW_SKIP_ROM, m_index, NULL, 0);
 }
 
-int UsbDongle::read(void)
+int UsbDongle::Bus::read(void)
 {
     uint8_t state;
     int err;
 
-    err = doCommand(OW_READ, &state, 1);
+    err = m_parent.doCommand(OW_READ, m_index, &state, 1);
     if (err < 0)
         return err;
 
     return state;
 }
 
-int UsbDongle::readByte(void)
+int UsbDongle::Bus::readByte(void)
 {
     uint8_t byte;
     int err;
 
-    err = doCommand(OW_READ_BYTE, &byte, 1);
+    err = m_parent.doCommand(OW_READ_BYTE, m_index, &byte, 1);
     if (err < 0)
         return err;
 
     return byte;
 }
 
-int UsbDongle::writeByte(uint8_t data)
+int UsbDongle::Bus::writeByte(uint8_t data)
 {
-    uint8_t cmd[2];
+    uint8_t cmd[3];
 
     cmd[0] = OW_WRITE_BYTE;
-    cmd[1] = data;
+    cmd[1] = m_index;
+    cmd[2] = data;
 
-    return doCommand(cmd, sizeof(cmd), NULL, 0);
+    return m_parent.doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
 /* HACK until OW pwm device is made */
-int UsbDongle::setPower(uint8_t power)
+int UsbDongle::Bus::setPower(uint8_t power)
 {
-    uint8_t cmd[2];
+    uint8_t cmd[3];
 
     cmd[0] = SET_POWER;
-    cmd[1] = power;
+    cmd[1] = m_index;
+    cmd[2] = power;
 
-    return doCommand(cmd, sizeof(cmd), NULL, 0);
+    return m_parent.doCommand(cmd, sizeof(cmd), NULL, 0);
 }
 
-bool UsbDongle::connect(void)
+bool UsbDongle::Bus::connect(void)
 {
-    int err;
-
-    err = libusb_init(&ctx);
-    if (err < 0) {
-        debug(0, "USB init failed: %s\n", libusb_error_name(err));
-        return false;
-    }
-    if (!openDevice(0x18d1, 0xbeef))
-        return false;
-
-    return true;
+    return m_parent.connect();
 }
 
-UsbDongle::Addr UsbDongle::getAddr(unsigned n)
+Dongle::Addr UsbDongle::Bus::getAddr(unsigned n)
 {
-    if (n < addrs.size())
-        return addrs[n];
+    if (n < m_addrs.size())
+        return m_addrs[n];
     return Addr();
 }
