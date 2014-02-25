@@ -46,6 +46,12 @@ M_LDFLAGS := -lusb-1.0
 M_LIBS := liblua libmongoose libmcp
 include $(BUILD_EXECUTABLE)
 
+M_NAME := owtempctl
+M_SRCS := owtempctl.cpp
+M_LIBS := libmcp
+M_LDFLAGS := -lusb-1.0
+include $(BUILD_EXECUTABLE)
+
 include $(call subdir-mkfiles)
 
 .PHONY: all
