@@ -78,7 +78,7 @@
 #error "unkown OW_TIMER value"
 #endif
 
-#define USEC(us)	((us) * (FOSC / 1000000))
+#define USEC(us)	((((uint32_t) (us)) * (FOSC / 1000))/1000)
 
 enum ows_dev_commands {
     OWS_DEV_CMD_WRITE_SCRATCHPAD = 0x4e,
