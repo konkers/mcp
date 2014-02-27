@@ -25,8 +25,8 @@ QUIET ?= @
 include $(BUILD_TOP)/build/host.mk
 include $(BUILD_TOP)/build/avr.mk
 
-M_NAME := mcp
-M_SRCS := main.cpp \
+M_NAME := libmcp
+M_SRCS := \
 	DongleThread.cpp \
 	Ds18b20.cpp \
 	EventQueue.cpp \
@@ -38,8 +38,12 @@ M_SRCS := main.cpp \
 	TimerThread.cpp \
 	UsbDongle.cpp \
 	WebServer.cpp
+include $(BUILD_STATIC_LIB)
+
+M_NAME := mcp
+M_SRCS := main.cpp
 M_LDFLAGS := -lusb-1.0
-M_LIBS := liblua libmongoose
+M_LIBS := liblua libmongoose libmcp
 include $(BUILD_EXECUTABLE)
 
 include $(call subdir-mkfiles)
