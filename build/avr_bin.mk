@@ -61,11 +61,19 @@ module_avr_$(M_NAME): $(OUT)/$(M_NAME).bin
 
 ifeq ("$(M_CROSS_CPU)","atmega48")
 AVRDUDE_CPU := m48
+AVRDUDE_FUSES :=
 else ifeq ("$(M_CROSS_CPU)","atmega88")
 AVRDUDE_CPU := m88p
 AVRDUDE_FUSES := -U lfuse:w:0xe7:m -U hfuse:w:0xdc:m -U efuse:w:0x01:m
 else ifeq ("$(M_CROSS_CPU)","atmega168")
 AVRDUDE_CPU := m168
+AVRDUDE_FUSES :=
+else ifeq ("$(M_CROSS_CPU)","atmega328p")
+AVRDUDE_CPU := m328p
+AVRDUDE_FUSES :=
+else ifeq ("$(M_CROSS_CPU)","atmega2560")
+AVRDUDE_CPU := m2560
+AVRDUDE_FUSES :=
 else ifeq ("$(M_CROSS_CPU)","atmega8")
 AVRDUDE_CPU := m8
 AVRDUDE_FUSES := -U lfuse:w:0x3f:m -U hfuse:w:0xd9:m
@@ -80,6 +88,7 @@ flash_$(M_NAME): $(OUT)/$(M_NAME).bin
 	echo $(_CPU)
 	avrdude -p $(_CPU) -c usbtiny -e -U flash:w:$< $(_FUSES)
 
+M_FUSES :=
 AVRDUDE_CPU :=
 AVRDUDE_FUSES :=
 M_AVR_CFLAGS :=
