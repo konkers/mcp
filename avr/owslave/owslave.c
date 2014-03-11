@@ -69,6 +69,15 @@ void ows_dev_scratchpad_update(uint8_t idx, uint8_t data)
     }
 }
 
+uint8_t ows_dev_get_scratchpad_read_size(void)
+{
+    return 0;
+}
+
+uint8_t ows_dev_scratchpad_read(uint8_t idx) {
+    return 0;
+}
+
 int main(void)
 {
     DDRE |= _BV(3);

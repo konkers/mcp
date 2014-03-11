@@ -24,7 +24,7 @@
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
 const PROGMEM uint8_t ows_addr[8] =
-{0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00};
+{0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02};
 
 struct output_cfg {
     volatile uint8_t *port;
@@ -58,6 +58,14 @@ void ows_dev_scratchpad_update(uint8_t idx, uint8_t data)
             output_set(data);
             break;
     }
+}
+
+uint8_t ows_dev_get_scratchpad_read_size(void) {
+    return 0;
+}
+
+uint8_t ows_dev_scratchpad_read(uint8_t idx) {
+    return 0;
 }
 
 int main(void)

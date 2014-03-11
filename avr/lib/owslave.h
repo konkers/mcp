@@ -29,5 +29,7 @@ void ows_init(volatile uint8_t *dq_pin,
 /* slave device needs to implement/devfine these */
 extern const PROGMEM uint8_t ows_addr[8];
 void ows_dev_scratchpad_update(uint8_t idx, uint8_t data);
+uint8_t ows_dev_get_scratchpad_read_size(void);
+uint8_t ows_dev_scratchpad_read(uint8_t idx);
 #endif /* __MCP_AVR_LIB_OWSLAVE_H__ */
 

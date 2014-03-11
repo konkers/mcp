@@ -82,15 +82,18 @@
 
 enum ows_dev_commands {
     OWS_DEV_CMD_WRITE_SCRATCHPAD = 0x4e,
+    OWS_DEV_CMD_READ_SCRATCHPAD = 0xbe,
 };
 
 enum ows_dev_state {
     OWS_DEV_CMD,
     OWS_DEV_WRITE_SCRATCHPAD,
+    OWS_DEV_READ_SCRATCHPAD,
 };
 
 uint8_t ows_dev_scratchpad_idx;
 uint8_t ows_dev_byte;
+uint8_t ows_dev_bit_idx;
 uint8_t ows_dev_do_commit;
 enum ows_dev_state ows_dev_state;
 
@@ -100,6 +103,10 @@ static uint8_t ows_dev_handle_cmd(uint8_t byte)
         case OWS_DEV_CMD_WRITE_SCRATCHPAD:
             ows_dev_state = OWS_DEV_WRITE_SCRATCHPAD;
             return 0;
+
+        case OWS_DEV_CMD_READ_SCRATCHPAD:
+            ows_dev_state = OWS_DEV_READ_SCRATCHPAD;
+            return ows_dev_get_scratchpad_read_size() * 8;
     }
 
     return 0;
@@ -124,6 +131,9 @@ static uint8_t ows_dev_handle_byte(uint8_t byte)
             ows_dev_byte = byte;
             ows_dev_do_commit = 1;
             return 0;
+
+        default:
+            return 0;
     }
 
     return 0;
@@ -139,13 +149,25 @@ static void ows_dev_commit(void)
 
 static uint8_t ows_dev_get_write_data(void)
 {
-    return 0;
+    if (ows_dev_state == OWS_DEV_READ_SCRATCHPAD) {
+        if (ows_dev_bit_idx == 0) {
+            ows_dev_byte = ows_dev_scratchpad_read(ows_dev_scratchpad_idx);
+            ows_dev_scratchpad_idx++;
+        }
+        uint8_t ret = ows_dev_byte & 0x1;
+        ows_dev_byte = ows_dev_byte >> 1;
+        ows_dev_bit_idx = (ows_dev_bit_idx + 1) & 0x7;
+        return ret;
+    } else {
+        return 0;
+    }
 }
 
 static void ows_dev_reset(void)
 {
     ows_dev_state = OWS_DEV_CMD;
     ows_dev_scratchpad_idx = 0;
+    ows_dev_bit_idx = 0;
     ows_dev_do_commit = 0;
 }
 
@@ -351,7 +373,7 @@ enum ows_phy_state {
 
 static enum ows_phy_state ows_phy_state;
 static uint16_t ows_phy_cycle_start;
-static uint8_t ows_phy_write_bytes;
+static uint8_t ows_phy_write_bits;
 static volatile uint8_t *ows_phy_dq_pin;
 static volatile uint8_t *ows_phy_dq_port;
 static volatile uint8_t *ows_phy_dq_ddr;
@@ -483,7 +505,7 @@ static void ows_phy_handle_write(void);
 static void ows_phy_reset(void)
 {
     ows_net_reset();
-    ows_phy_write_bytes = 0;
+    ows_phy_write_bits = 0;
     ows_phy_state = OWS_PHY_RESET0;
     ows_phy_trigger_edge(1, ows_phy_handle_reset0);
     if (ows_phy_read())
@@ -498,10 +520,10 @@ static void ows_phy_handle_idle(void)
     if (ows_phy_read())
         return;
 
-    if (ows_phy_write_bytes > 0) {
+    if (ows_phy_write_bits > 0) {
         ows_phy_drive(ows_net_get_write_data());
         ows_phy_trigger_time(USEC(20), ows_phy_handle_write);
-        ows_phy_write_bytes--;
+        ows_phy_write_bits--;
     } else {
         /* between 15 and 60 uS */
         ows_phy_trigger_time(USEC(37), ows_phy_handle_sample0);
@@ -529,11 +551,11 @@ static void ows_phy_handle_sample0(void)
 {
     if (ows_phy_read()) {
         ows_phy_trigger_edge(0, ows_phy_handle_idle);
-        ows_phy_write_bytes = ows_net_handle_data(1);
+        ows_phy_write_bits = ows_net_handle_data(1);
         ows_net_commit();
     } else {
         ows_phy_state = OWS_PHY_SAMPLE1;
-        ows_phy_write_bytes = ows_net_handle_data(0);
+        ows_phy_write_bits = ows_net_handle_data(0);
         /* between 120 and 480 uS */
         ows_phy_trigger_both(1, USEC(300),
                              ows_phy_handle_sample1_capture,
