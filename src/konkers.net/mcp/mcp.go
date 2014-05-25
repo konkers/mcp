@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 )
 
 type Controller interface {
@@ -106,14 +108,25 @@ func main() {
 				panic(err)
 			}
 			controllers[c.Name] = NewEnableController(input, enable, output)
+		} else if c.Pid != nil {
+			controller, err := NewPidController(c, state)
+			if err != nil {
+				panic(err)
+			}
+			controllers[c.Name] = controller
 		}
 	}
 
-	pidIn, _ := state.GetInput("rims")
-	pidOut, _ := state.GetOutput("rims_led")
-	controllers["pid"] = NewPidController(pidIn, pidOut, 90.0, 9.0, 3.1, 30.0)
+	//pidIn, _ := state.GetInput("rims")
+	//pidOut, _ := state.GetOutput("rims_led")
+	//controllers["pid"] = NewPidController(pidIn, pidOut, 90.0, 9.0, 3.1, 30.0)
 
+	go Webserver(state)
+
+	start := time.Now()
+	cyclePeriod := time.Millisecond * 100
 	for {
+		state.Lock()
 		for _, device := range devices {
 			err := device.Sync()
 			if err != nil {
@@ -123,6 +136,19 @@ func main() {
 		for _, controller := range controllers {
 			controller.Sync()
 		}
+		state.Unlock()
+
+		end := time.Now()
+		start = start.Add(cyclePeriod)
+		for start.Before(end) {
+			log.Printf("cycled overflow\n")
+			start = start.Add(cyclePeriod)
+		}
+
+		// as far as I can tell the Go time APIs do not provide
+		// a mecahnism for absolute sleeps so we'll fake it with
+		// a relative one
+		time.Sleep(start.Sub(time.Now()))
 	}
 
 	dongle.Close()

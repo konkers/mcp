@@ -55,10 +55,19 @@ type EnableConfig struct {
 	Output string `json:"output"`
 }
 
+type PidConfig struct {
+	Input  string  `json:"input"`
+	Output string  `json:"output"`
+	P      float32 `json:"p"`
+	I      float32 `json:"i"`
+	D      float32 `json:"d"`
+}
+
 type ControllerConfig struct {
 	Name   string        `json:"name"`
 	Gain   *GainConfig   `json:"gain,omitempty"`
 	Enable *EnableConfig `json:"enable,omitempty"`
+	Pid    *PidConfig    `json:"pid,omitempty"`
 }
 
 type Config struct {

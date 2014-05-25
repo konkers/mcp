@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "fmt"
+	"time"
 )
 
 const (
@@ -21,6 +21,7 @@ const (
 
 var ds18b20HasMaster bool = false
 var ds18b20State int = DS_STATE_IDLE
+var ds18b20PrevTime time.Time
 
 type ds18b20 struct {
 	address Address
@@ -69,6 +70,15 @@ func (ds *ds18b20) GetInputs() []Input {
 }
 
 func (ds *ds18b20) handleIdleState() (state int, err error) {
+	if ds18b20PrevTime.IsZero() {
+		ds18b20PrevTime = time.Now()
+	} else {
+		if time.Since(ds18b20PrevTime) < time.Second {
+			return
+		}
+		ds18b20PrevTime.Add(time.Second)
+	}
+
 	_, err = ds.bus.Reset()
 	if err != nil {
 		return ds18b20State, err
@@ -84,7 +94,6 @@ func (ds *ds18b20) handleIdleState() (state int, err error) {
 		return ds18b20State, err
 	}
 	ds.iter = 0
-
 	return DS_STATE_SAMPLING, nil
 }
 
