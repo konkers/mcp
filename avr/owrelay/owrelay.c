@@ -23,8 +23,11 @@
 
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
 
+// 0.01 seconds
+uint8_t tocks = 0;
+
 const PROGMEM uint8_t ows_addr[8] =
-{0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x02};
+{0xe0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01};
 
 struct output_cfg {
     volatile uint8_t *port;
@@ -49,6 +52,7 @@ static void output_set(uint8_t data)
         else
             *output[i].port &= ~output[i].mask;
     }
+    tocks = 0;
 }
 
 void ows_dev_scratchpad_update(uint8_t idx, uint8_t data)
@@ -68,11 +72,35 @@ uint8_t ows_dev_scratchpad_read(uint8_t idx) {
     return 0;
 }
 
+ISR(TIMER0_COMPA_vect) {
+    uint8_t mask;
+    uint8_t i;
+
+    if (tocks < 100) {
+        tocks++;
+        return;
+    }
+
+    for(i = 0, mask = 0x01; i < ARRAY_SIZE(output); i++, mask <<= 1) {
+        *output[i].port &= ~output[i].mask;
+    }
+}
+
 int main(void)
 {
     DDRC |= _BV(0) | _BV(1) | _BV(2) | _BV(3);
 
     ows_init(&PINB, &PORTB, &DDRB, _BV(0));
+
+    /* clear timer on compare wgm[3:0] = 0010b */
+    TCCR0A = _BV(WGM01);
+
+    /* 1024  prescaling CS[2:0] = 101b*/
+    TCCR0B = _BV(CS00) | _BV(CS02);
+
+    // 0.01 seconds
+    OCR0A = 180;
+    TIMSK0 |= _BV(OCIE0A) | _BV(TOIE0);
 
     sei();
     while (1) {

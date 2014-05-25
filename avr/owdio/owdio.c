@@ -86,12 +86,40 @@ uint8_t ows_dev_scratchpad_read(uint8_t idx)
     }
 }
 
+// 0.01 seconds
+uint8_t tocks = 0;
+ISR(TIMER0_COMPA_vect) {
+    if (tocks < 100) {
+        tocks++;
+        return;
+    }
+
+    uint8_t mask = 0x1;
+    uint8_t i;
+    for (i = 0; i < ARRAY_SIZE(pins); i++) {
+        *pins[i].port &= ~pins[i].mask;
+        mask = mask << 1;
+    }
+}
+
 int main(void)
 {
     DDRC |= _BV(0) | _BV(1) | _BV(2) | _BV(3) | _BV(4) | _BV(5);
     DDRD |= _BV(0) | _BV(1);
 
     ows_init(&PINB, &PORTB, &DDRB, _BV(0));
+
+    /* no output compare */
+    /* clear timer on compare wgm[3:0] = 0010b */
+    TCCR0A = _BV(WGM01);
+
+    /* 1024  prescaling CS[2:0] = 101b*/
+    TCCR0B = _BV(CS00) | _BV(CS02);
+
+    // 0.1 seconds
+    OCR0A = 180;
+    TIMSK0 |= _BV(OCIE0A) | _BV(TOIE0);
+
 
     sei();
     while (1) {
@@ -100,6 +128,9 @@ int main(void)
         if (in_registers_update) {
             memcpy(in_registers, in_registers_staging, sizeof(in_registers));
             in_registers_update = 0;
+
+            TCNT0 = 0;
+            tocks = 0;
 
             mask = 0x1;
             for (i = 0; i < ARRAY_SIZE(pins); i++) {

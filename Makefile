@@ -52,6 +52,12 @@ M_LIBS := libmcp
 M_LDFLAGS := -lusb-1.0
 include $(BUILD_EXECUTABLE)
 
+M_NAME := owiotest
+M_SRCS := owiotest.cpp
+M_LIBS := libmcp
+M_LDFLAGS := -lusb-1.0
+include $(BUILD_EXECUTABLE)
+
 include $(call subdir-mkfiles)
 
 .PHONY: all

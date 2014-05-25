@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the Licene.
 
+#include <sys/time.h>
+
 #include "OwIO.hpp"
 
 using namespace std;
@@ -20,7 +22,7 @@ using namespace std;
 #define DS18B20_CMD_READ_SCRATCHPAD	0xbe
 
 OwIO::OwIOOutput::OwIOOutput(OwIO *board, unsigned index, std::string name)
-: State::Output(name, 2), board(board), index(index)
+: State::Output(name, 0xff), board(board), index(index)
 {
 
 }
@@ -28,11 +30,10 @@ OwIO::OwIOOutput::OwIOOutput(OwIO *board, unsigned index, std::string name)
 void OwIO::OwIOOutput::setValue(unsigned value)
 {
     State::Output::setValue(value);
-    board->setOutput(index, value);
 }
 
 OwIO::OwIO(Dongle *dongle, Dongle::Addr addr, std::string name, unsigned numOutputs, const char *names[]) :
-    dongle(dongle), addr(addr), name(name), numOutputs(numOutputs), outputState(0)
+    dongle(dongle), addr(addr), name(name), numOutputs(numOutputs)
 {
     int i;
     State::State *state = State::getState();
@@ -57,18 +58,25 @@ OwIO::~OwIO()
     delete outputs;
 }
 
-void OwIO::setOutput(unsigned index, unsigned value)
-{
-    if (value)
-        outputState |= 1 << index;
-    else
-        outputState &= ~(1 << index);
-}
-
 void OwIO::sync(void)
 {
+    uint8_t output_state = 0;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    uint64_t usecs = now.tv_usecs;
+    uint8_t current_val = usecs * 255 / 1000000;
+
+    for (i = 0; i < numOutputs; i++) {
+        unsigned value = outputs[i]->getValue();
+        unsigned index = outputs[i]->getIndex();
+
+        if (value >= current_val) {
+            output_state |= 1 << index;
+        }
+    }
+
     dongle->reset();
     dongle->matchRom(addr);
     dongle->writeByte(OWCMD_WRITE_SCRATCHPAD);
-    dongle->writeByte(outputState);
+    dongle->writeByte(output_state);
 }
