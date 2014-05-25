@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="jquery.js"></script>
+<script type='text/javascript'>
+
+
+ function doStuff() {
+             $.ajax({
+                url: "/params/rims_pid/set",
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify({p: 90.0, i: 9.0, d: 3.1, set_point:30}),
+                success: function(data) {
+                },
+                error: function( xhr, status ) {
+                        console.log("error " + status);
+                        console.log(xhr);
+                },
+        });
+    }
+
+$(document).ready(function() {
+                  doStuff()
+                  });
+</script>
+<title>mcp</title>
+</head>
+<body>
+test
+</body>
+</html>

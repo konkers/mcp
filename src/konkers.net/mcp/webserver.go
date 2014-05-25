@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
@@ -14,6 +15,9 @@ type mcpHandler struct {
 
 	statusReg *regexp.Regexp
 	paramsReg *regexp.Regexp
+	staticReg *regexp.Regexp
+
+	staticHandler http.Handler
 }
 
 type statusResponse struct {
@@ -27,6 +31,9 @@ func Webserver(state *State) {
 		state:     state,
 		statusReg: regexp.MustCompile("^/status$"),
 		paramsReg: regexp.MustCompile("^/params/([a-zA-Z0-9_-]+)/(set)$"),
+		staticReg: regexp.MustCompile("^/static/"),
+		staticHandler: http.StripPrefix("/static/",
+			http.FileServer(http.Dir("./src/konkers.net/mcp/static"))),
 	}
 	http.ListenAndServe(":8080", handler)
 	i := 0
@@ -55,7 +62,7 @@ func Webserver(state *State) {
 	}
 }
 
-func (m *mcpHandler) serveStatus(w http.ResponseWriter, req *http.Request, args []string) {
+func (m *mcpHandler) handleStatus(w http.ResponseWriter, req *http.Request, args []string) {
 
 	var resp statusResponse
 	resp.Inputs = make(map[string]float32)
@@ -83,14 +90,53 @@ func (m *mcpHandler) serveStatus(w http.ResponseWriter, req *http.Request, args 
 
 }
 
-func (m *mcpHandler) serveStatus(w http.ResponseWriter, req *http.Request, args []string) {
+func (m *mcpHandler) handleParams(w http.ResponseWriter, req *http.Request, args []string) {
+	params := make(map[string]float32)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.NotFound(w, req)
+		return
+	}
+	err = json.Unmarshal(body, &params)
+	if err != nil {
+		http.NotFound(w, req)
+		return
+	}
+	m.state.Lock()
+	defer m.state.Unlock()
+
+	groupP, err := m.state.GetParameterGroup(args[1])
+	if err != nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	group := *groupP
+
+	// first make sure that all params exist
+	for name, _ := range params {
+		if _, ok := group[name]; !ok {
+			http.NotFound(w, req)
+			return
+		}
+	}
+
+	// then set the values
+	for name, value := range params {
+		group[name] = value
+	}
 }
 
 func (m *mcpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if args := m.statusReg.FindStringSubmatch(req.URL.Path); args != nil {
-		m.serveStatus(w, req, args)
+		m.handleStatus(w, req, args)
 	} else if args := m.paramsReg.FindStringSubmatch(req.URL.Path); args != nil {
-		m.serveParams(w, req, args)
+		m.handleParams(w, req, args)
+	} else if args := m.staticReg.FindStringSubmatch(req.URL.Path); args != nil {
+		m.staticHandler.ServeHTTP(w, req)
+	} else if req.URL.Path == "/" {
+		http.Redirect(w, req, "/static/", http.StatusFound)
+
 	} else {
 		http.NotFound(w, req)
 	}
