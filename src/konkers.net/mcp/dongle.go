@@ -23,6 +23,8 @@ type Bus interface {
 
 type Device interface {
 	Sync() (err error)
+	GetOutputs() []Output
+	GetInputs() []Input
 }
 
 type Dongle interface {
@@ -185,7 +187,7 @@ func (bus *OwDongleBus) MatchRom(addr Address) (err error) {
 }
 
 func (bus *OwDongleBus) SkipRom() (err error) {
-	_, err = bus.dongle.doShortCommand(OW_RESET, bus.index, make([]byte, 0))
+	_, err = bus.dongle.doShortCommand(OW_SKIP_ROM, bus.index, make([]byte, 0))
 	return err
 }
 

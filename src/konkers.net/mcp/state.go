@@ -7,12 +7,14 @@ import (
 type Input interface {
 	GetName() (name string)
 	GetValue() (value float32)
+	HasNewValue() bool
 }
 
 type Output interface {
 	GetName() (name string)
 	GetValue() (value float32)
 	SetValue(value float32)
+	HasNewValue() bool
 }
 
 type State struct {
@@ -51,16 +53,19 @@ func (state *State) AddOutput(output Output) (err error) {
 }
 
 func (state *State) GetInput(name string) (input Input, err error) {
-	if _, ok := state.inputs[name]; !ok {
-		return nil, fmt.Errorf("Can find input %s", name)
+	if input, ok := state.inputs[name]; ok {
+		return input, nil
 	}
 
-	return state.inputs[name], nil
+	if input, ok := state.outputs[name]; ok {
+		return input, nil
+	}
+	return nil, fmt.Errorf("Can't find input %s", name)
 }
 
 func (state *State) GetOutput(name string) (output Output, err error) {
 	if _, ok := state.outputs[name]; !ok {
-		return nil, fmt.Errorf("Can find output %s", name)
+		return nil, fmt.Errorf("Can't find output %s", name)
 	}
 
 	return state.outputs[name], nil

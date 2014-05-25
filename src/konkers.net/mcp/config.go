@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type Ds18B20Config struct {
+type Ds18b20Config struct {
 	Name           string  `json:"name"`
 	Calibration100 float32 `json:"cal100"`
 	Calibration0   float32 `json:"cal0"`
@@ -29,6 +29,7 @@ type OwioPortConfig struct {
 	Name      string `json:"name"`
 	Direction string `json:"direction"`
 	Position  uint8  `json:"position"`
+	Active    string `json:"active,omitempty"`
 }
 
 type OwioConfig struct {
@@ -37,13 +38,32 @@ type OwioConfig struct {
 
 type DeviceConfig struct {
 	Address string         `json:"addr"`
-	Ds18B20 *Ds18B20Config `json:"ds18b20,omitempty"`
+	Ds18b20 *Ds18b20Config `json:"ds18b20,omitempty"`
 	Owout   *OwoutConfig   `json:"owout,omitempty"`
 	Owio    *OwioConfig    `json:"owdio,omitempty"`
 }
 
+type GainConfig struct {
+	Input  string  `json:"input"`
+	Output string  `json:"output"`
+	Gain   float32 `json:"gain"`
+}
+
+type EnableConfig struct {
+	Input  string `json:"input"`
+	Enable string `json:"enable"`
+	Output string `json:"output"`
+}
+
+type ControllerConfig struct {
+	Name   string        `json:"name"`
+	Gain   *GainConfig   `json:"gain,omitempty"`
+	Enable *EnableConfig `json:"enable,omitempty"`
+}
+
 type Config struct {
-	Devices []*DeviceConfig `json:"devices"`
+	Devices     []*DeviceConfig     `json:"devices"`
+	Controllers []*ControllerConfig `json:"controllers"`
 }
 
 type ConfigDb struct {
@@ -104,6 +124,10 @@ func NewConfigDb(filename string) (configDb *ConfigDb, err error) {
 	//	os.Stdout.Write(b)
 
 	return configDb, nil
+}
+
+func (db *ConfigDb) GetConfig() (config *Config) {
+	return &db.config
 }
 
 func (db *ConfigDb) LookupDevice(address Address) (device *DeviceConfig, err error) {

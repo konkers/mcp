@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type Controller interface {
+	Sync()
+}
+
 func main() {
 	configDb, err := NewConfigDb("config.json")
 	if err != nil {
@@ -28,7 +32,7 @@ func main() {
 		}
 
 		for _, addr := range addrs {
-			fmt.Printf("%d: %v\n", i, addr.Address)
+			fmt.Printf("%d: %v\n", i, addr)
 			config, err := configDb.LookupDevice(addr)
 			if err != nil {
 				panic(err)
@@ -40,34 +44,74 @@ func main() {
 					panic(err)
 				}
 				devices[addr] = owdio
-				for _, out := range owdio.GetOutputs() {
-					err = state.AddOutput(out)
-					if err != nil {
-						panic(err)
-					}
 
+			} else if config.Owout != nil {
+				dev, err := NewOwOut(bus, addr, config.Owout)
+				if err != nil {
+					panic(err)
 				}
-				for _, in := range owdio.GetInputs() {
-					err = state.AddInput(in)
-					if err != nil {
-						panic(err)
-					}
+				devices[addr] = dev
 
+			} else if config.Ds18b20 != nil {
+				dev, err := NewDs18b20(bus, addr, config.Ds18b20)
+				if err != nil {
+					panic(err)
 				}
+				devices[addr] = dev
 
 			}
 
 		}
 	}
+	for _, dev := range devices {
+		for _, out := range dev.GetOutputs() {
+			err = state.AddOutput(out)
+			if err != nil {
+				panic(err)
+			}
 
-	hltSwitch, err := state.GetInput("hlt_switch")
-	if err != nil {
-		panic(err)
+		}
+		for _, in := range dev.GetInputs() {
+			err = state.AddInput(in)
+			if err != nil {
+				panic(err)
+			}
+
+		}
 	}
-	rimsLed, err := state.GetOutput("rims_led")
-	if err != nil {
-		panic(err)
+
+	controllers := make(map[string]Controller)
+	for _, c := range configDb.GetConfig().Controllers {
+		if c.Gain != nil {
+			input, err := state.GetInput(c.Gain.Input)
+			if err != nil {
+				panic(err)
+			}
+			output, err := state.GetOutput(c.Gain.Output)
+			if err != nil {
+				panic(err)
+			}
+			controllers[c.Name] = NewGainController(input, output, c.Gain.Gain)
+		} else if c.Enable != nil {
+			input, err := state.GetInput(c.Enable.Input)
+			if err != nil {
+				panic(err)
+			}
+			enable, err := state.GetInput(c.Enable.Enable)
+			if err != nil {
+				panic(err)
+			}
+			output, err := state.GetOutput(c.Enable.Output)
+			if err != nil {
+				panic(err)
+			}
+			controllers[c.Name] = NewEnableController(input, enable, output)
+		}
 	}
+
+	pidIn, _ := state.GetInput("rims")
+	pidOut, _ := state.GetOutput("rims_led")
+	controllers["pid"] = NewPidController(pidIn, pidOut, 90.0, 9.0, 3.1, 30.0)
 
 	for {
 		for _, device := range devices {
@@ -76,7 +120,9 @@ func main() {
 				panic(err)
 			}
 		}
-		rimsLed.SetValue(hltSwitch.GetValue())
+		for _, controller := range controllers {
+			controller.Sync()
+		}
 	}
 
 	dongle.Close()

@@ -1,0 +1,139 @@
+{
+    "controllers": [
+    {
+        "name": "hlt_pump",
+        "gain": {
+            "input": "hlt_switch",
+            "output": "hlt_pump",
+            "gain": 1.0
+        }
+    },
+    {
+        "name": "mlt_pump",
+        "gain": {
+            "input": "mlt_switch",
+            "output": "mlt_pump",
+            "gain": 1.0
+        }
+    },
+    {
+        "name": "bk_pump",
+        "gain": {
+            "input": "bk_switch",
+            "output": "bk_pump",
+            "gain": 1.0
+        }
+    },
+    {
+        "name": "rims_enable",
+        "enable": {
+            "input": "rims_led",
+            "enable": "rims_enable",
+            "output": "rims_out"
+        }
+    }
+    ],
+    "devices": [
+    {
+        "addr": "28-c5-c5-f4-03-00-00-01",
+        "ds18b20": {
+            "name": "boil",
+            "cal0": 0.25,
+            "cal100": 100.0
+        }
+    },{
+        "addr": "28-77-02-8d-02-00-00-8b",
+        "ds18b20": {
+            "cal0": 0.375,
+            "cal100": 99.5625
+        }
+    },{
+        "addr": "28-55-33-8d-02-00-00-1a",
+        "ds18b20": {
+            "cal0": 0.25,
+            "cal100": 99.75
+        }
+    },{
+        "addr": "28-99-bd-f4-03-00-00-01",
+        "ds18b20": {
+            "name": "mlt",
+            "cal0": 0.25,
+            "cal100": 99.75
+        }
+    },{
+        "addr": "28-96-b8-f4-03-00-00-f7",
+        "ds18b20": {
+            "name": "rims",
+            "cal0": 0.0,
+            "cal100": 100.0
+        }
+    },{
+        "addr": "28-36-be-f4-03-00-00-37",
+        "ds18b20": {
+            "name": "hlt",
+            "cal0": 0.0,
+            "cal100": 100.0
+        }
+    },{
+        "addr": "e0-01-00-00-00-00-01-02",
+        "owdio": {
+            "ports": [
+            {
+                "position": 0,
+                "name": "hlt_switch",
+                "direction": "in",
+                "active": "low"
+            },{
+                "position": 1,
+                "name": "mlt_switch",
+                "direction": "in",
+                "active": "low"
+            },{
+                "position": 2,
+                "name": "bk_switch",
+                "direction": "in",
+                "active": "low"
+            },{
+                "position": 3,
+                "name": "rims_enable",
+                "direction": "in",
+                "active": "low"
+            },{
+                "position": 4,
+                "name": "rims_led",
+                "direction": "out"
+            }]
+        }
+    },{
+        "addr": "e0-01-00-00-00-00-02-00",
+        "owout": {
+            "ports": [
+            {
+                "position": 0,
+                "name": "hlt_pump"
+            },{
+                "position": 1,
+                "name": "mlt_pump"
+            },{
+                "position": 2,
+                "name": "bk_pump"
+            }]
+        }
+    },{
+        "addr": "e0-01-00-00-00-00-02-01",
+        "owout": {
+            "ports": [
+            {
+                "position": 3,
+                "name": "mlt_valve"
+            },{
+                "position": 2,
+                "name": "hlt_valve"
+            },{
+                "position": 0,
+                "name": "rims_out"
+            }]
+        }
+    }
+    ]
+}

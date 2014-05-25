@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"time"
 )
 
 type OwDioPort struct {
-	value float32
-	index byte
-	name  string
+	value  float32
+	index  byte
+	name   string
+	invert bool
 }
 
 type OwDio struct {
@@ -57,8 +58,9 @@ func NewOwDio(bus Bus, address Address, config *OwioConfig) (owdio *OwDio, err e
 			dio.outputs[numOuts] = dioPort
 			numOuts++
 		} else if port.Direction == "in" {
-			fmt.Printf("addin in%d %s @ %d\n",
-				numIns, dioPort.name, dioPort.index)
+			if port.Active == "low" {
+				dioPort.invert = true
+			}
 			dio.inputs[numIns] = dioPort
 			numIns++
 		}
@@ -85,6 +87,8 @@ func (dio *OwDio) GetInputs() []Input {
 func (dio *OwDio) Sync() (err error) {
 	bus := dio.bus
 
+	nowValue := float32(time.Now().Nanosecond()) / 999999999.0
+
 	_, err = bus.Reset()
 	if err != nil {
 		return err
@@ -98,7 +102,9 @@ func (dio *OwDio) Sync() (err error) {
 	var outData [10]byte
 	outData[0] = 0x4e
 	for _, port := range dio.outputs {
-		outData[1+port.index] = byte(port.value * 255)
+		if nowValue < port.value {
+			outData[1+port.index] = 0xff
+		}
 	}
 	for _, port := range dio.inputs {
 		// enable pullups on inputs
@@ -112,8 +118,6 @@ func (dio *OwDio) Sync() (err error) {
 			return err
 		}
 	}
-
-	fmt.Printf("%v\n", outData)
 
 	_, err = bus.Reset()
 	if err != nil {
@@ -135,12 +139,15 @@ func (dio *OwDio) Sync() (err error) {
 		return err
 	}
 
-	fmt.Printf("data: %02x\n", data)
 	for _, port := range dio.inputs {
 		if data&(1<<port.index) != 0 {
 			port.value = 1.0
 		} else {
 			port.value = 0.0
+		}
+
+		if port.invert {
+			port.value = 1.0 - port.value
 		}
 	}
 
@@ -153,6 +160,10 @@ func (port *OwDioPort) GetValue() (value float32) {
 
 func (port *OwDioPort) SetValue(value float32) {
 	port.value = value
+}
+
+func (port *OwDioPort) HasNewValue() bool {
+	return true
 }
 
 func (port *OwDioPort) GetName() (name string) {
