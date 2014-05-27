@@ -114,6 +114,12 @@ func main() {
 				panic(err)
 			}
 			controllers[c.Name] = controller
+		} else if c.Parameter != nil {
+			controller, err := NewParameterController(c, state)
+			if err != nil {
+				panic(err)
+			}
+			controllers[c.Name] = controller
 		}
 	}
 

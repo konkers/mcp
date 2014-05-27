@@ -25,11 +25,37 @@
         }
     },
     {
+        "name": "rims_pid",
+        "pid": {
+            "input": "rims",
+            "output": "rims_led",
+            "p": 60.0,
+            "i": 2.0,
+            "d": 0.0
+        }
+    },
+    {
         "name": "rims_enable",
         "enable": {
             "input": "rims_led",
             "enable": "rims_enable",
             "output": "rims_out"
+        }
+    },
+    {
+        "name": "hlt_valve_control",
+        "parameter": {
+            "output": "hlt_valve",
+            "on_text": "transfer",
+            "off_text": "recircluate"
+        }
+    },
+    {
+        "name": "mlt_valve_control",
+        "parameter": {
+            "output": "mlt_valve",
+            "on_text": "transfer",
+            "off_text": "recircluate"
         }
     }
     ],

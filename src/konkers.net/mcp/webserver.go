@@ -125,6 +125,9 @@ func (m *mcpHandler) handleParams(w http.ResponseWriter, req *http.Request, args
 	for name, value := range params {
 		group[name] = value
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	fmt.Fprintf(w, "{}")
 }
 
 func (m *mcpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {

@@ -63,11 +63,18 @@ type PidConfig struct {
 	D      float32 `json:"d"`
 }
 
+type ParameterConfig struct {
+	Output  string `json:"output"`
+	OnText  string `json:"on_text"`
+	OffText string `json:"off_text"`
+}
+
 type ControllerConfig struct {
-	Name   string        `json:"name"`
-	Gain   *GainConfig   `json:"gain,omitempty"`
-	Enable *EnableConfig `json:"enable,omitempty"`
-	Pid    *PidConfig    `json:"pid,omitempty"`
+	Name      string           `json:"name"`
+	Gain      *GainConfig      `json:"gain,omitempty"`
+	Enable    *EnableConfig    `json:"enable,omitempty"`
+	Pid       *PidConfig       `json:"pid,omitempty"`
+	Parameter *ParameterConfig `json:"parameter,omitempty"`
 }
 
 type Config struct {
